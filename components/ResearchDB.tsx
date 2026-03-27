@@ -91,7 +91,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
   const optRows = optionsTrades.map(t => {
     const eqLast = prices[t.ticker];
     const gl = computeGL(t, eqLast);
-    const glPct = gl != null && t.basis ? gl / (t.entryPrice * t.units * 100) : null;
+    const glPct = gl != null ? gl / (t.entryPrice * t.units * 100) : null;
     const sizeX = (t.entryPrice * t.units * 100) / settings.optionsBaseline;
     return { ...t, eqLast, gl, glPct, sizeX };
   });
@@ -489,3 +489,4 @@ export default function ResearchDB() {
     </div>
   );
 }
+
