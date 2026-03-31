@@ -2,15 +2,25 @@
 import { TradeEntry, AssetClass, DBData } from "@/lib/db";
 import { computeGL, fmt$, glColor, ASSET_COLOR, ASSET_CLASSES } from "./BlotterTab";
 
-function fmtPct(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return "—";
-  return (n >= 0 ? "+" : "") + (n * 100).toFixed(1) + "%";
+type Term = "ST" | "MT" | "LT";
+
+function classifyTerm(t: TradeEntry): Term {
+  const entryDate = t.entryDate ? new Date(t.entryDate) : null;
+  const exitDate = t.exitDate ? new Date(t.exitDate) : new Date();
+  if (!entryDate) return "ST";
+  const days = Math.round((exitDate.getTime() - entryDate.getTime()) / 86400000);
+  if (days < 30) return "ST";
+  if (days < 180) return "MT";
+  return "LT";
 }
+
 function holdDays(t: TradeEntry): number | null {
   if (!t.entryDate || !t.exitDate) return null;
   return Math.round((new Date(t.exitDate).getTime() - new Date(t.entryDate).getTime()) / 86400000);
 }
+
 type Stats = { total: number; wins: number; losses: number; winRate: number | null; avgWin: number | null; avgLoss: number | null; profitFactor: number | null; totalGL: number; avgHold: number | null };
+
 function calcStats(trades: TradeEntry[]): Stats {
   const closed = trades.filter(t => t.status === "Closed");
   const withGL = closed.map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null) as { t: TradeEntry; gl: number }[];
@@ -22,35 +32,44 @@ function calcStats(trades: TradeEntry[]): Stats {
   const grossLoss = Math.abs(losses.reduce((s, x) => s + x.gl, 0));
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? Infinity : null;
   const holds = closed.map(t => holdDays(t)).filter((d): d is number => d != null);
-  return { total: closed.length, wins: wins.length, losses: losses.length, winRate: withGL.length ? wins.length / withGL.length : null, avgWin, avgLoss, profitFactor, totalGL: withGL.reduce((s, x) => s + x.gl, 0), avgHold: holds.length ? holds.reduce((s, d) => s + d, 0) / holds.length : null };
+  return {
+    total: closed.length, wins: wins.length, losses: losses.length,
+    winRate: withGL.length ? wins.length / withGL.length : null,
+    avgWin, avgLoss, profitFactor,
+    totalGL: withGL.reduce((s, x) => s + x.gl, 0),
+    avgHold: holds.length ? holds.reduce((s, d) => s + d, 0) / holds.length : null,
+  };
 }
+
 function StatCard({ label, value, color, sub }: { label: string; value: string; color?: string; sub?: string }) {
   return (
-    <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, padding: "18px 20px", flex: 1, minWidth: 140 }}>
-      <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 8, textTransform: "uppercase" as const }}>{label}</div>
-      <div style={{ fontSize: 22, color: color ?? "#e2e8f0", fontWeight: 600, fontFamily: "'DM Mono', monospace" }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>{sub}</div>}
+    <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 18px", flex: 1, minWidth: 120 }}>
+      <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 6, textTransform: "uppercase" as const }}>{label}</div>
+      <div style={{ fontSize: 20, color: color ?? "#e2e8f0", fontWeight: 600, fontFamily: "'DM Mono', monospace" }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: "#444", marginTop: 3 }}>{sub}</div>}
     </div>
   );
 }
+
 function WinRateBar({ wins, losses }: { wins: number; losses: number }) {
   const total = wins + losses;
   const winPct = total > 0 ? (wins / total) * 100 : 0;
   const lossPct = total > 0 ? (losses / total) * 100 : 0;
   return (
     <div>
-      <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: "#1e2128" }}>
+      <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: "#1e2128" }}>
         <div style={{ width: `${winPct}%`, background: "#4ade80" }} />
         <div style={{ width: `${100 - winPct - lossPct}%`, background: "#2a2d35" }} />
         <div style={{ width: `${lossPct}%`, background: "#f87171" }} />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontSize: 10, color: "#444" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 10, color: "#444" }}>
         <span style={{ color: "#4ade80" }}>{wins}W</span>
         <span style={{ color: "#f87171" }}>{losses}L</span>
       </div>
     </div>
   );
 }
+
 function TradeRow({ t }: { t: TradeEntry }) {
   const gl = computeGL(t);
   return (
@@ -62,21 +81,56 @@ function TradeRow({ t }: { t: TradeEntry }) {
         <div style={{ fontSize: 11, color: "#444", marginTop: 2 }}>{t.entryDate}{t.exitDate ? ` → ${t.exitDate}` : ""}</div>
       </div>
       <div style={{ textAlign: "right" as const }}>
-        <div style={{ fontSize: 16, color: glColor(gl), fontWeight: 600 }}>{gl != null ? (gl >= 0 ? "+" : "") + fmt$(gl) : "—"}</div>
+        <div style={{ fontSize: 15, color: glColor(gl), fontWeight: 600 }}>{gl != null ? (gl >= 0 ? "+" : "") + fmt$(gl) : "—"}</div>
         <div style={{ fontSize: 10, color: "#444" }}>{t.direction} · {t.units} units</div>
       </div>
     </div>
   );
 }
+
+function StatsRow({ label, s, color }: { label: string; s: Stats; color: string }) {
+  const pf = s.profitFactor == null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2) + "x";
+  if (s.total === 0) return null;
+  return (
+    <tr style={{ borderBottom: "1px solid #0f1117" }}>
+      <td style={{ padding: "9px 12px", fontSize: 11 }}><span style={{ color, fontWeight: 600, letterSpacing: 1 }}>{label}</span></td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: "#8b9299" }}>{s.total}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: glColor(s.winRate != null ? s.winRate - 0.5 : null) }}>{s.winRate != null ? (s.winRate * 100).toFixed(0) + "%" : "—"}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: "#4ade80" }}>{fmt$(s.avgWin)}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: "#f87171" }}>{fmt$(s.avgLoss)}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: s.profitFactor != null && s.profitFactor >= 1 ? "#4ade80" : "#f87171" }}>{pf}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: glColor(s.totalGL), fontWeight: 600 }}>{fmt$(s.totalGL)}</td>
+      <td style={{ padding: "9px 12px", fontSize: 12, color: "#555" }}>{s.avgHold != null ? `${Math.round(s.avgHold)}d` : "—"}</td>
+    </tr>
+  );
+}
+
+const TERM_COLOR: Record<Term, string> = { ST: "#60a5fa", MT: "#c9a84c", LT: "#a78bfa" };
+const TERM_LABEL: Record<Term, string> = { ST: "SHORT TERM (<1mo)", MT: "MED TERM (<6mo)", LT: "LONG TERM (6mo+)" };
+
 export default function AnalyticsTab({ data }: { data: DBData }) {
   const blotter = data.blotter ?? [];
+  const closed = blotter.filter(t => t.status === "Closed");
   const overall = calcStats(blotter);
-  if (!blotter.some(t => t.status === "Closed")) return <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO CLOSED TRADES YET</div>;
+
+  if (closed.length === 0) return <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO CLOSED TRADES YET</div>;
+
   const byClass: Record<string, Stats> = {};
   for (const ac of ASSET_CLASSES) { const trades = blotter.filter(t => t.assetClass === ac); if (trades.some(t => t.status === "Closed")) byClass[ac] = calcStats(trades); }
+
+  const byTerm: Record<Term, Stats> = {
+    ST: calcStats(blotter.filter(t => classifyTerm(t) === "ST")),
+    MT: calcStats(blotter.filter(t => classifyTerm(t) === "MT")),
+    LT: calcStats(blotter.filter(t => classifyTerm(t) === "LT")),
+  };
+
   const pfDisplay = overall.profitFactor == null ? "—" : overall.profitFactor === Infinity ? "∞" : overall.profitFactor.toFixed(2) + "x";
+  const tableHeaders = ["CLASS","TRADES","WIN%","AVG WIN","AVG LOSS","P.F.","TOTAL GL","AVG HOLD"];
+  const thStyle = { padding: "8px 12px", color: "#444", fontWeight: 400, fontSize: 10, letterSpacing: 1, textAlign: "left" as const };
+
   return (
     <div>
+      {/* Overall headline */}
       <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 14 }}>OVERALL — {overall.total} CLOSED TRADES</div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const, marginBottom: 16 }}>
         <StatCard label="Win Rate" value={overall.winRate != null ? (overall.winRate * 100).toFixed(1) + "%" : "—"} color={glColor(overall.winRate != null ? overall.winRate - 0.5 : null)} sub={`${overall.wins}W / ${overall.losses}L`} />
@@ -87,14 +141,52 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
         <StatCard label="Avg Hold" value={overall.avgHold != null ? `${Math.round(overall.avgHold)}d` : "—"} color="#8b9299" />
       </div>
       <WinRateBar wins={overall.wins} losses={overall.losses} />
+
+      {/* By term + by class side by side */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 28 }}>
+
+        {/* BY TERM */}
+        <div>
+          <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 14 }}>BY TERM</div>
+          <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <tbody>
+                <StatsRow label="ST" s={byTerm.ST} color={TERM_COLOR.ST} />
+                <StatsRow label="MT" s={byTerm.MT} color={TERM_COLOR.MT} />
+                <StatsRow label="LT" s={byTerm.LT} color={TERM_COLOR.LT} />
+              </tbody>
+            </table>
+          </div>
+          {/* Term breakdown cards */}
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+            {(["ST", "MT", "LT"] as Term[]).map(term => {
+              const s = byTerm[term];
+              if (s.total === 0) return null;
+              return (
+                <div key={term} style={{ background: "#0a0c10", border: `1px solid ${TERM_COLOR[term]}25`, borderLeft: `3px solid ${TERM_COLOR[term]}`, borderRadius: 8, padding: "12px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, color: TERM_COLOR[term], letterSpacing: 1.5 }}>{TERM_LABEL[term]}</span>
+                    <span style={{ fontSize: 11, color: glColor(s.totalGL), fontWeight: 600 }}>{fmt$(s.totalGL)}</span>
+                  </div>
+                  <WinRateBar wins={s.wins} losses={s.losses} />
+                  <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 11 }}>
+                    <span style={{ color: "#555" }}>{s.total} trades</span>
+                    <span style={{ color: s.winRate != null && s.winRate >= 0.5 ? "#4ade80" : "#f87171" }}>{s.winRate != null ? (s.winRate * 100).toFixed(0) + "% win" : "—"}</span>
+                    {s.avgHold != null && <span style={{ color: "#555" }}>avg {Math.round(s.avgHold)}d</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* BY ASSET CLASS + best/worst */}
         <div>
           <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 14 }}>BY ASSET CLASS</div>
-          <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden" }}>
+          <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden", marginBottom: 20 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>
-                {["CLASS","TRADES","WIN%","AVG WIN","AVG LOSS","P.F.","TOTAL GL"].map(h => <th key={h} style={{ padding: "8px 12px", color: "#444", fontWeight: 400, fontSize: 10, letterSpacing: 1, textAlign: "left" as const }}>{h}</th>)}
-              </tr></thead>
+              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {Object.entries(byClass).map(([ac, s]) => {
                   const pf = s.profitFactor == null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2) + "x";
@@ -106,27 +198,29 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
                     <td style={{ padding: "9px 12px", fontSize: 12, color: "#f87171" }}>{fmt$(s.avgLoss)}</td>
                     <td style={{ padding: "9px 12px", fontSize: 12, color: s.profitFactor != null && s.profitFactor >= 1 ? "#4ade80" : "#f87171" }}>{pf}</td>
                     <td style={{ padding: "9px 12px", fontSize: 12, color: glColor(s.totalGL), fontWeight: 600 }}>{fmt$(s.totalGL)}</td>
+                    <td style={{ padding: "9px 12px", fontSize: 12, color: "#555" }}>{s.avgHold != null ? `${Math.round(s.avgHold)}d` : "—"}</td>
                   </tr>;
                 })}
               </tbody>
             </table>
           </div>
-        </div>
-        <div>
+
           <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 14 }}>BEST & WORST</div>
           <div style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, padding: "6px 18px 4px" }}>
             <div style={{ fontSize: 10, color: "#4ade80", letterSpacing: 1.5, padding: "10px 0 4px" }}>TOP 3 WINNERS</div>
-            {(() => { const s = [...blotter].filter(t => t.status === "Closed").map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null && x.gl > 0).sort((a, b) => b.gl! - a.gl!).slice(0, 3); return s.length === 0 ? <div style={{ fontSize: 11, color: "#333", padding: "8px 0" }}>None yet</div> : s.map(({ t }) => <TradeRow key={t.id} t={t} />); })()}
+            {(() => { const s = [...closed].map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null && x.gl > 0).sort((a, b) => b.gl! - a.gl!).slice(0, 3); return s.length === 0 ? <div style={{ fontSize: 11, color: "#333", padding: "8px 0" }}>None yet</div> : s.map(({ t }) => <TradeRow key={t.id} t={t} />); })()}
             <div style={{ fontSize: 10, color: "#f87171", letterSpacing: 1.5, padding: "14px 0 4px" }}>TOP 3 LOSERS</div>
-            {(() => { const s = [...blotter].filter(t => t.status === "Closed").map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null && x.gl < 0).sort((a, b) => a.gl! - b.gl!).slice(0, 3); return s.length === 0 ? <div style={{ fontSize: 11, color: "#333", padding: "8px 0 14px" }}>None yet</div> : s.map(({ t }) => <TradeRow key={t.id} t={t} />); })()}
+            {(() => { const s = [...closed].map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null && x.gl < 0).sort((a, b) => a.gl! - b.gl!).slice(0, 3); return s.length === 0 ? <div style={{ fontSize: 11, color: "#333", padding: "8px 0 14px" }}>None yet</div> : s.map(({ t }) => <TradeRow key={t.id} t={t} />); })()}
           </div>
         </div>
       </div>
+
+      {/* Cumulative G/L chart */}
       {(() => {
-        const closed = blotter.filter(t => t.status === "Closed" && t.exitDate).map(t => ({ date: t.exitDate!, gl: computeGL(t) ?? 0 })).sort((a, b) => a.date.localeCompare(b.date));
-        if (closed.length < 2) return null;
+        const pts = closed.filter(t => t.exitDate).map(t => ({ date: t.exitDate!, gl: computeGL(t) ?? 0 })).sort((a, b) => a.date.localeCompare(b.date));
+        if (pts.length < 2) return null;
         let running = 0;
-        const points = closed.map(({ date, gl }) => { running += gl; return { date, gl, running }; });
+        const points = pts.map(({ date, gl }) => { running += gl; return { date, gl, running }; });
         const min = Math.min(...points.map(p => p.running)), max = Math.max(...points.map(p => p.running)), range = max - min || 1;
         const W = 800, H = 120, PAD = 16;
         const x = (i: number) => PAD + (i / (points.length - 1)) * (W - PAD * 2);
