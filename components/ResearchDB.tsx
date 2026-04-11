@@ -40,15 +40,15 @@ function fmtPct(n: number | null | undefined): string {
   return (n >= 0 ? "+" : "") + (n * 100).toFixed(2) + "%";
 }
 function glColor(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return "#8b9299";
+  if (n == null || isNaN(n)) return "#4a4f5c";
   return n >= 0 ? "#4ade80" : "#f87171";
 }
 function sizeColor(x: number): string {
   if (x > 1.4) return "#f87171";   // oversized
   if (x > 1.15) return "#fb923c";  // slightly over
   if (x >= 0.85) return "#4ade80"; // on target
-  if (x >= 0.5) return "#555";     // undersized
-  return "#333";
+  if (x >= 0.5) return "#6a7080";     // undersized
+  return "#909499";
 }
 
 // ─── Shared UI ───────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ function sizeColor(x: number): string {
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#0f1117", border: "1px solid #2a2d35", borderRadius: 12, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", padding: 28 }}>
+      <div style={{ background: "#e2e4e8", border: "1px solid #2a2d35", borderRadius: 12, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <span style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, textTransform: "uppercase" as const }}>{title}</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
@@ -67,14 +67,14 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-const iStyle: React.CSSProperties = { width: "100%", background: "#1a1d24", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontSize: 13, outline: "none" };
+const iStyle: React.CSSProperties = { width: "100%", background: "#d4d6db", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#1a1d24", fontSize: 13, outline: "none" };
 const taStyle: React.CSSProperties = { ...iStyle, height: 90, resize: "vertical" as const };
 const selStyle: React.CSSProperties = { ...iStyle };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 13 }}>
-      <label style={{ display: "block", fontSize: 10, color: "#555", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>
+      <label style={{ display: "block", fontSize: 10, color: "#6a7080", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>
       {children}
     </div>
   );
@@ -82,7 +82,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SaveBtn({ onClick, label = "SAVE" }: { onClick: () => void; label?: string }) {
   return (
-    <button onClick={onClick} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>
+    <button onClick={onClick} style={{ background: "#c9a84c", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>
       {label}
     </button>
   );
@@ -161,52 +161,52 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
   const totalOptGL = optRows.reduce((s, r) => s + (r.gl ?? 0), 0);
   const grandTotal = totalEqGL + totalOptGL;
 
-  const th: React.CSSProperties = { padding: "6px 12px", color: "#444", fontWeight: 400, textAlign: "left", fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" };
+  const th: React.CSSProperties = { padding: "6px 12px", color: "#7a8090", fontWeight: 400, textAlign: "left", fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" };
   const td: React.CSSProperties = { padding: "9px 12px", fontSize: 12, whiteSpace: "nowrap" };
 
   return (
     <div>
       {/* Baseline configurator */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center", flexWrap: "wrap" as const }}>
-        <span style={{ fontSize: 10, color: "#444", letterSpacing: 1.5 }}>BASELINE</span>
+        <span style={{ fontSize: 10, color: "#7a8090", letterSpacing: 1.5 }}>BASELINE</span>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, color: "#555" }}>EQ</span>
-          <span style={{ fontSize: 11, color: "#8b9299" }}>$</span>
+          <span style={{ fontSize: 10, color: "#6a7080" }}>EQ</span>
+          <span style={{ fontSize: 11, color: "#4a4f5c" }}>$</span>
           <input
             type="number" defaultValue={eqBase}
             onBlur={e => updateBaseline("equityBaseline", parseFloat(e.target.value))}
-            style={{ width: 80, background: "#0f1117", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#e2e8f0", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+            style={{ width: 80, background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#1a1d24", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, color: "#555" }}>OPT</span>
-          <span style={{ fontSize: 11, color: "#8b9299" }}>$</span>
+          <span style={{ fontSize: 10, color: "#6a7080" }}>OPT</span>
+          <span style={{ fontSize: 11, color: "#4a4f5c" }}>$</span>
           <input
             type="number" defaultValue={optBase}
             onBlur={e => updateBaseline("optionsBaseline", parseFloat(e.target.value))}
-            style={{ width: 80, background: "#0f1117", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#e2e8f0", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+            style={{ width: 80, background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#1a1d24", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
           />
         </div>
-        <span style={{ fontSize: 10, color: "#2a2d35" }}>updates on blur · persisted</span>
+        <span style={{ fontSize: 10, color: "#b0b3bc" }}>updates on blur · persisted</span>
       </div>
 
       {/* Summary bar */}
-      <div style={{ display: "flex", gap: 32, marginBottom: 24, padding: "14px 20px", background: "#0f1117", border: "1px solid #1e2128", borderRadius: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 32, marginBottom: 24, padding: "14px 20px", background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 8, alignItems: "center" }}>
         <div>
-          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>TOTAL OPEN G/L</div>
+          <div style={{ fontSize: 10, color: "#7a8090", letterSpacing: 1.5, marginBottom: 3 }}>TOTAL OPEN G/L</div>
           <div style={{ fontSize: 20, color: glColor(grandTotal), fontWeight: 600 }}>{fmt$(grandTotal)}</div>
         </div>
-        <div style={{ width: 1, height: 36, background: "#1e2128" }} />
+        <div style={{ width: 1, height: 36, background: "#c4c7ce" }} />
         <div>
-          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>EQUITY</div>
+          <div style={{ fontSize: 10, color: "#7a8090", letterSpacing: 1.5, marginBottom: 3 }}>EQUITY</div>
           <div style={{ fontSize: 14, color: glColor(totalEqGL) }}>{fmt$(totalEqGL)}</div>
         </div>
         <div>
-          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>OPTIONS</div>
+          <div style={{ fontSize: 10, color: "#7a8090", letterSpacing: 1.5, marginBottom: 3 }}>OPTIONS</div>
           <div style={{ fontSize: 14, color: glColor(totalOptGL) }}>{fmt$(totalOptGL)}</div>
         </div>
         <div style={{ marginLeft: "auto" }}>
-          <button onClick={refreshPrices} disabled={loading} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "8px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1, opacity: loading ? 0.6 : 1 }}>
+          <button onClick={refreshPrices} disabled={loading} style={{ background: "#c9a84c", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "8px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1, opacity: loading ? 0.6 : 1 }}>
             {loading ? "LOADING..." : "↻ REFRESH PRICES"}
           </button>
         </div>
@@ -216,9 +216,9 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2 }}>EQUITY POSITIONS</span>
-          <button onClick={() => setAddEq(true)} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+          <button onClick={() => setAddEq(true)} style={{ background: "#e8f4e8", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
         </div>
-        <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
+        <div style={{ overflowX: "auto", background: "#f0f1f3", borderRadius: 8, border: "1px solid #1e2128" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #1e2128" }}>
@@ -229,14 +229,14 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
               {eqRows.map(r => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
                   <td style={{ ...td, color: "#4ade80" }}>{r.status}</td>
-                  <td style={{ ...td, color: "#555" }}>{r.term}</td>
-                  <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{r.ticker}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{r.units}</td>
+                  <td style={{ ...td, color: "#6a7080" }}>{r.term}</td>
+                  <td style={{ ...td, color: "#1a1d24", fontWeight: 600 }}>{r.ticker}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{r.units}</td>
                   <td style={{ ...td, color: r.ls === "L" ? "#4ade80" : "#f87171" }}>{r.ls}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${r.fill.toFixed(2)}</td>
-                  <td style={{ ...td, color: "#e2e8f0" }}>{r.last != null ? `$${r.last.toFixed(2)}` : "—"}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.mv)}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.fill * r.units)}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>${r.fill.toFixed(2)}</td>
+                  <td style={{ ...td, color: "#1a1d24" }}>{r.last != null ? `$${r.last.toFixed(2)}` : "—"}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{fmt$(r.mv)}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{fmt$(r.fill * r.units)}</td>
                   <td style={{ ...td, color: glColor(r.gl), fontWeight: 600 }}>{fmt$(r.gl)}</td>
                   <td style={{ ...td, color: glColor(r.glPct) }}>{fmtPct(r.glPct)}</td>
                   <td style={{ ...td }}>
@@ -246,7 +246,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
                     {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : "—"}
                   </td>
                   <td style={td}>
-                    <button onClick={() => onChange({ ...data, equityPositions: data.equityPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
+                    <button onClick={() => onChange({ ...data, equityPositions: data.equityPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#909499", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
                   </td>
                 </tr>
               ))}
@@ -259,9 +259,9 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2 }}>OPTIONS POSITIONS</span>
-          <button onClick={() => setAddOpt(true)} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+          <button onClick={() => setAddOpt(true)} style={{ background: "#e8f4e8", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
         </div>
-        <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
+        <div style={{ overflowX: "auto", background: "#f0f1f3", borderRadius: 8, border: "1px solid #1e2128" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #1e2128" }}>
@@ -271,15 +271,15 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
             <tbody>
               {optRows.map(r => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
-                  <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{r.ticker}</td>
+                  <td style={{ ...td, color: "#1a1d24", fontWeight: 600 }}>{r.ticker}</td>
                   <td style={{ ...td, color: r.pc === "C" ? "#4ade80" : "#f87171" }}>{r.pc}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${r.strike}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{r.expiration}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{r.units}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${r.fill.toFixed(2)}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.basis)}</td>
-                  <td style={{ ...td, color: "#555" }}>${r.eqPrice.toFixed(2)}</td>
-                  <td style={{ ...td, color: "#e2e8f0" }}>{r.eqLast != null ? `$${r.eqLast.toFixed(2)}` : "—"}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>${r.strike}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{r.expiration}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{r.units}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>${r.fill.toFixed(2)}</td>
+                  <td style={{ ...td, color: "#4a4f5c" }}>{fmt$(r.basis)}</td>
+                  <td style={{ ...td, color: "#6a7080" }}>${r.eqPrice.toFixed(2)}</td>
+                  <td style={{ ...td, color: "#1a1d24" }}>{r.eqLast != null ? `$${r.eqLast.toFixed(2)}` : "—"}</td>
                   <td style={{ ...td, color: glColor(r.gl), fontWeight: 600 }}>{fmt$(r.gl)}</td>
                   <td style={{ ...td, color: glColor(r.glPct) }}>{fmtPct(r.glPct)}</td>
                   <td style={{ ...td }}>
@@ -289,14 +289,14 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
                     {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : "—"}
                   </td>
                   <td style={td}>
-                    <button onClick={() => onChange({ ...data, optionsPositions: data.optionsPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
+                    <button onClick={() => onChange({ ...data, optionsPositions: data.optionsPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#909499", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p style={{ fontSize: 10, color: "#333", marginTop: 6, letterSpacing: 0.5 }}>
+        <p style={{ fontSize: 10, color: "#909499", marginTop: 6, letterSpacing: 0.5 }}>
           G/L = (eq last − eq entry) × contracts × 100. Reversed for puts.
         </p>
       </div>
@@ -376,26 +376,26 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
     <div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
         <button onClick={() => { setForm(blank); setEditing(null); setOpen(true); }}
-          style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
+          style={{ background: "#e8f4e8", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
           + NEW ENTRY
         </button>
       </div>
 
       {items.length === 0 && (
-        <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES</div>
+        <div style={{ textAlign: "center", padding: 80, color: "#b0b3bc", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES</div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {items.map((item, i) => {
           const e = item as Record<string, string>;
           return (
-            <div key={item.id} style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
+            <div key={item.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
                   {(type === "thesis" || type === "tradeIdeas") && e.ticker && (
-                    <span style={{ fontSize: 15, color: "#e2e8f0", fontWeight: 600 }}>{e.ticker}</span>
+                    <span style={{ fontSize: 15, color: "#1a1d24", fontWeight: 600 }}>{e.ticker}</span>
                   )}
-                  {e.title && <span style={{ fontSize: 13, color: "#8b9299" }}>{e.title}</span>}
+                  {e.title && <span style={{ fontSize: 13, color: "#4a4f5c" }}>{e.title}</span>}
                   {type === "thesis" && e.conviction && (
                     <span style={{ fontSize: 10, color: convColor[e.conviction], border: `1px solid ${convColor[e.conviction]}40`, borderRadius: 3, padding: "2px 7px" }}>{e.conviction}</span>
                   )}
@@ -403,12 +403,12 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                     <span style={{ fontSize: 10, color: e.direction === "Long" ? "#4ade80" : "#f87171", border: `1px solid ${e.direction === "Long" ? "#4ade8040" : "#f8717140"}`, borderRadius: 3, padding: "2px 7px" }}>{e.direction} · {e.term}</span>
                   )}
                   {(type === "macro" || type === "marketUpdates") && e.date && (
-                    <span style={{ fontSize: 11, color: "#444" }}>{e.date}</span>
+                    <span style={{ fontSize: 11, color: "#7a8090" }}>{e.date}</span>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
-                  <button onClick={() => edit(i)} style={{ background: "none", border: "1px solid #2a2d35", color: "#555", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
-                  <button onClick={() => remove(i)} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15 }}>✕</button>
+                  <button onClick={() => edit(i)} style={{ background: "none", border: "1px solid #2a2d35", color: "#6a7080", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
+                  <button onClick={() => remove(i)} style={{ background: "none", border: "none", color: "#909499", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div>
               </div>
 
@@ -421,7 +421,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               )}
 
               {(e.summary || e.thesis || e.body) && (
-                <p style={{ fontSize: 13, color: "#8b9299", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>
+                <p style={{ fontSize: 13, color: "#4a4f5c", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>
               )}
 
               {type === "thesis" && (e.catalysts || e.risks) && (
@@ -433,9 +433,9 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
               {type === "tradeIdeas" && (e.entry || e.target || e.stop) && (
                 <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
-                  {e.entry && <span style={{ fontSize: 11, color: "#555" }}>ENTRY <span style={{ color: "#e2e8f0" }}>{e.entry}</span></span>}
-                  {e.target && <span style={{ fontSize: 11, color: "#555" }}>TARGET <span style={{ color: "#4ade80" }}>{e.target}</span></span>}
-                  {e.stop && <span style={{ fontSize: 11, color: "#555" }}>STOP <span style={{ color: "#f87171" }}>{e.stop}</span></span>}
+                  {e.entry && <span style={{ fontSize: 11, color: "#6a7080" }}>ENTRY <span style={{ color: "#1a1d24" }}>{e.entry}</span></span>}
+                  {e.target && <span style={{ fontSize: 11, color: "#6a7080" }}>TARGET <span style={{ color: "#4ade80" }}>{e.target}</span></span>}
+                  {e.stop && <span style={{ fontSize: 11, color: "#6a7080" }}>STOP <span style={{ color: "#f87171" }}>{e.stop}</span></span>}
                 </div>
               )}
 
@@ -530,21 +530,21 @@ export default function ResearchDB() {
 
   if (!data) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#080a0e" }}>
-        <div style={{ fontSize: 11, color: "#333", letterSpacing: 3 }}>LOADING...</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#e8e9ec" }}>
+        <div style={{ fontSize: 11, color: "#909499", letterSpacing: 3 }}>LOADING...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080a0e" }}>
+    <div style={{ minHeight: "100vh", background: "#e8e9ec" }}>
       {/* Header */}
       <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex", alignItems: "center", height: 52 }}>
         <div style={{ width: 3, height: 18, background: "#c9a84c", borderRadius: 2, marginRight: 14 }} />
         <span style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 3 }}>RESEARCH DB</span>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          {saving && <span style={{ fontSize: 10, color: "#444", letterSpacing: 1 }}>SAVING...</span>}
-          {!saving && lastSaved && <span style={{ fontSize: 10, color: "#2a2d35", letterSpacing: 1 }}>SAVED {lastSaved.toLocaleTimeString()}</span>}
+          {saving && <span style={{ fontSize: 10, color: "#7a8090", letterSpacing: 1 }}>SAVING...</span>}
+          {!saving && lastSaved && <span style={{ fontSize: 10, color: "#b0b3bc", letterSpacing: 1 }}>SAVED {lastSaved.toLocaleTimeString()}</span>}
         </div>
       </div>
 
@@ -554,7 +554,7 @@ export default function ResearchDB() {
           <button key={i} onClick={() => setTab(i)} style={{
             background: "none", border: "none",
             borderBottom: tab === i ? "2px solid #c9a84c" : "2px solid transparent",
-            color: tab === i ? "#c9a84c" : "#3a3d45",
+            color: tab === i ? "#c9a84c" : "#7a8090",
             padding: "13px 18px", fontSize: 10, letterSpacing: 2, cursor: "pointer",
             transition: "color 0.15s", marginBottom: -1,
           }}>{t}</button>
