@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #e8e9ec; color: #1a1d24; font-family: 'DM Mono', monospace; }
+body { background: #e8e9ec; color: #0d0f14; font-family: 'DM Mono', monospace; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #d8d9dc; }
-::-webkit-scrollbar-thumb { background: #b0b3bc; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #a0a3ac; border-radius: 3px; }
 input, select, textarea { font-family: 'DM Mono', monospace; }
