@@ -1,8 +1,57 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
-import BlotterTab, { computeGL, glColor, fmt$, ASSET_COLOR } from "./BlotterTab";
+import BlotterTab from "./BlotterTab";
 import AnalyticsTab from "./AnalyticsTab";
-import { DBData, TradeEntry } from "@/lib/db";
+import JournalTab from "./JournalTab";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type EquityPosition = {
+  id: number; status: string; term: string; ticker: string;
+  units: number; ls: string; fill: number; size: number; thesis: string;
+};
+type OptionsPosition = {
+  id: number; status: string; term: string; ticker: string; units: number;
+  ls: string; pc: string; eqPrice: number; strike: number; expiration: string;
+  fill: number; basis: number; sizing: number; contract: string; thesis: string;
+};
+type ResearchEntry = { id: number; [key: string]: unknown };
+type DBData = {
+  equityPositions: EquityPosition[];
+  optionsPositions: OptionsPosition[];
+  tradeIdeas: ResearchEntry[];
+  thesis: ResearchEntry[];
+  macro: ResearchEntry[];
+  marketUpdates: ResearchEntry[];
+  blotter: ResearchEntry[];
+  settings: { equityBaseline: number; optionsBaseline: number };
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmt$(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return "—";
+  const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (n < 0 ? "-$" : "$") + s;
+}
+function fmtPct(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return "—";
+  return (n >= 0 ? "+" : "") + (n * 100).toFixed(2) + "%";
+}
+function glColor(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return "#8b9299";
+  return n >= 0 ? "#4ade80" : "#f87171";
+}
+function sizeColor(x: number): string {
+  if (x > 1.4) return "#f87171";   // oversized
+  if (x > 1.15) return "#fb923c";  // slightly over
+  if (x >= 0.85) return "#4ade80"; // on target
+  if (x >= 0.5) return "#555";     // undersized
+  return "#333";
+}
+
+// ─── Shared UI ───────────────────────────────────────────────────────────────
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
@@ -18,238 +67,324 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-const iStyle: React.CSSProperties = { width: "100%", background: "#1a1d24", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontSize: 13, outline: "none", fontFamily: "'DM Mono', monospace" };
+const iStyle: React.CSSProperties = { width: "100%", background: "#1a1d24", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#e2e8f0", fontSize: 13, outline: "none" };
 const taStyle: React.CSSProperties = { ...iStyle, height: 90, resize: "vertical" as const };
 const selStyle: React.CSSProperties = { ...iStyle };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div style={{ marginBottom: 13 }}><label style={{ display: "block", fontSize: 10, color: "#555", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>{children}</div>;
-}
-function fmtPct(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return "—";
-  return (n >= 0 ? "+" : "") + (n * 100).toFixed(2) + "%";
-}
-function sizeColor(x: number): string {
-  if (x > 1.4) return "#f87171"; if (x > 1.15) return "#fb923c";
-  if (x >= 0.85) return "#4ade80"; if (x >= 0.5) return "#555"; return "#333";
+  return (
+    <div style={{ marginBottom: 13 }}>
+      <label style={{ display: "block", fontSize: 10, color: "#555", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>
+      {children}
+    </div>
+  );
 }
 
-// ─── Positions Tab ────────────────────────────────────────────────────────────
+function SaveBtn({ onClick, label = "SAVE" }: { onClick: () => void; label?: string }) {
+  return (
+    <button onClick={onClick} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>
+      {label}
+    </button>
+  );
+}
+
+// ─── Positions Tab ───────────────────────────────────────────────────────────
+
 function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) => void }) {
   const [prices, setPrices] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(false);
-  const settings = data.settings ?? { equityBaseline: 900, optionsBaseline: 600, futuresBaseline: 1000, forexBaseline: 1000 };
-  const openTrades = (data.blotter ?? []).filter(t => t.status === "Open");
-  const equityTrades = openTrades.filter(t => (t.assetClass === "Equity" || t.assetClass === "Crypto") && !t.isStrategy);
-  const optionsTrades = openTrades.filter(t => t.assetClass === "Options" && !t.isStrategy);
-  const strategyTrades = openTrades.filter(t => t.isStrategy);
-  const otherTrades = openTrades.filter(t => !["Equity", "Crypto", "Options"].includes(t.assetClass));
-
-  async function refreshPrices() {
-    setLoading(true);
-    const tickerSet = new Set(openTrades.map(t => t.ticker));
-    const tickers = Array.from(tickerSet);
-    if (tickers.length === 0) { setLoading(false); return; }
-    const r = await fetch(`/api/prices?tickers=${tickers.join(",")}`);
-    setPrices(await r.json());
-    setLoading(false);
-  }
-
-  function updateBaseline(key: keyof typeof settings, val: number) {
+  const [addEq, setAddEq] = useState(false);
+  const [addOpt, setAddOpt] = useState(false);
+  const blankEq = { ticker: "", units: "", fill: "", term: "ST", ls: "L", thesis: "" };
+  const blankOpt = { ticker: "", units: "1", ls: "L", pc: "C", strike: "", expiration: "", fill: "", thesis: "" };
+  const [eqF, setEqF] = useState<Record<string, string>>(blankEq);
+  const [optF, setOptF] = useState<Record<string, string>>(blankOpt);
+  const settings = data.settings ?? { equityBaseline: 900, optionsBaseline: 600 };
+  const eqBase = settings.equityBaseline;
+  const optBase = settings.optionsBaseline;
+  function updateBaseline(key: "equityBaseline" | "optionsBaseline", val: number) {
     if (isNaN(val) || val <= 0) return;
     onChange({ ...data, settings: { ...settings, [key]: val } });
   }
 
-  const eqRows = equityTrades.map(t => {
-    const last = prices[t.ticker];
-    const cost = t.entryPrice * t.units;
-    const mv = last != null ? last * t.units : null;
-    const gl = computeGL(t, last);
-    const glPct = gl != null && cost > 0 ? gl / cost : null;
-    const sizeX = cost / settings.equityBaseline;
-    return { ...t, last, mv, gl, glPct, sizeX };
+  async function refreshPrices() {
+    setLoading(true);
+    const tickerSet = new Set([...data.equityPositions.map(p => p.ticker), ...data.optionsPositions.map(p => p.ticker)]);
+    const tickers = Array.from(tickerSet);
+    const r = await fetch(`/api/prices?tickers=${tickers.join(",")}`);
+    const result = await r.json();
+    setPrices(result);
+    setLoading(false);
+  }
+
+  function saveEq() {
+    const pos: EquityPosition = {
+      id: Date.now(), status: "Open", term: eqF.term, ticker: eqF.ticker.toUpperCase(),
+      units: +eqF.units, ls: eqF.ls, fill: +eqF.fill,
+      size: (+eqF.units * +eqF.fill) / eqBase, thesis: eqF.thesis,
+    };
+    onChange({ ...data, equityPositions: [...data.equityPositions, pos] });
+    setAddEq(false); setEqF(blankEq);
+  }
+
+  function saveOpt() {
+    const basis = +optF.fill * 100 * +optF.units;
+    const pos: OptionsPosition = {
+      id: Date.now(), status: "Open", term: "ST", ticker: optF.ticker.toUpperCase(),
+      units: +optF.units, ls: optF.ls, pc: optF.pc,
+      eqPrice: prices[optF.ticker.toUpperCase()] ?? 0,
+      strike: +optF.strike, expiration: optF.expiration,
+      fill: +optF.fill, basis, sizing: basis / optBase, contract: "", thesis: optF.thesis,
+    };
+    onChange({ ...data, optionsPositions: [...data.optionsPositions, pos] });
+    setAddOpt(false); setOptF(blankOpt);
+  }
+
+  const eqRows = data.equityPositions.map(p => {
+    const last = prices[p.ticker];
+    const mv = last != null ? last * p.units : null;
+    const cost = p.fill * p.units;
+    const gl = mv != null ? mv - cost : null;
+    const glPct = gl != null ? gl / cost : null;
+    return { ...p, last, mv, gl, glPct };
   });
 
-  const optRows = optionsTrades.map(t => {
-    const eqLast = prices[t.ticker];
-    const gl = computeGL(t, eqLast);
-    const basis = t.entryPrice * t.units * 100;
-    const glPct = gl != null && basis > 0 ? gl / basis : null;
-    const sizeX = basis / settings.optionsBaseline;
-    return { ...t, eqLast, gl, glPct, sizeX };
+  const optRows = data.optionsPositions.map(p => {
+    const eqLast = prices[p.ticker];
+    const eqMove = eqLast != null ? eqLast - p.eqPrice : null;
+    const gl = eqMove != null ? (p.pc === "C" ? eqMove : -eqMove) * p.units * 100 : null;
+    const glPct = gl != null ? gl / p.basis : null;
+    return { ...p, eqLast, gl, glPct };
   });
 
   const totalEqGL = eqRows.reduce((s, r) => s + (r.gl ?? 0), 0);
   const totalOptGL = optRows.reduce((s, r) => s + (r.gl ?? 0), 0);
   const grandTotal = totalEqGL + totalOptGL;
 
-  const th: React.CSSProperties = { padding: "6px 12px", color: "#444", fontWeight: 400, textAlign: "left" as const, fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" as const };
-  const td: React.CSSProperties = { padding: "9px 12px", fontSize: 12, whiteSpace: "nowrap" as const, fontFamily: "'DM Mono', monospace" };
+  const th: React.CSSProperties = { padding: "6px 12px", color: "#444", fontWeight: 400, textAlign: "left", fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" };
+  const td: React.CSSProperties = { padding: "9px 12px", fontSize: 12, whiteSpace: "nowrap" };
 
   return (
     <div>
-      {/* Baseline */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 16, alignItems: "center", flexWrap: "wrap" as const }}>
+      {/* Baseline configurator */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center", flexWrap: "wrap" as const }}>
         <span style={{ fontSize: 10, color: "#444", letterSpacing: 1.5 }}>BASELINE</span>
-        {([["EQ", "equityBaseline"], ["OPT", "optionsBaseline"], ["FUT", "futuresBaseline"], ["FX", "forexBaseline"]] as const).map(([label, key]) => (
-          <div key={key} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ fontSize: 10, color: "#555" }}>{label}</span>
-            <span style={{ fontSize: 11, color: "#555" }}>$</span>
-            <input type="number" defaultValue={settings[key]} key={settings[key]} onBlur={e => updateBaseline(key, parseFloat(e.target.value))} style={{ width: 76, background: "#0f1117", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#e2e8f0", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }} />
-          </div>
-        ))}
-        <span style={{ fontSize: 10, color: "#2a2d35" }}>saves on blur</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "#555" }}>EQ</span>
+          <span style={{ fontSize: 11, color: "#8b9299" }}>$</span>
+          <input
+            type="number" defaultValue={eqBase}
+            onBlur={e => updateBaseline("equityBaseline", parseFloat(e.target.value))}
+            style={{ width: 80, background: "#0f1117", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#e2e8f0", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+          />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "#555" }}>OPT</span>
+          <span style={{ fontSize: 11, color: "#8b9299" }}>$</span>
+          <input
+            type="number" defaultValue={optBase}
+            onBlur={e => updateBaseline("optionsBaseline", parseFloat(e.target.value))}
+            style={{ width: 80, background: "#0f1117", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#e2e8f0", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+          />
+        </div>
+        <span style={{ fontSize: 10, color: "#2a2d35" }}>updates on blur · persisted</span>
       </div>
 
-      {/* Summary */}
-      <div style={{ display: "flex", gap: 32, marginBottom: 24, padding: "14px 20px", background: "#0f1117", border: "1px solid #1e2128", borderRadius: 8, alignItems: "center", flexWrap: "wrap" as const }}>
-        <div><div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>TOTAL OPEN G/L</div><div style={{ fontSize: 20, color: glColor(grandTotal), fontWeight: 600 }}>{fmt$(grandTotal)}</div></div>
+      {/* Summary bar */}
+      <div style={{ display: "flex", gap: 32, marginBottom: 24, padding: "14px 20px", background: "#0f1117", border: "1px solid #1e2128", borderRadius: 8, alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>TOTAL OPEN G/L</div>
+          <div style={{ fontSize: 20, color: glColor(grandTotal), fontWeight: 600 }}>{fmt$(grandTotal)}</div>
+        </div>
         <div style={{ width: 1, height: 36, background: "#1e2128" }} />
-        <div><div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>EQUITY / CRYPTO</div><div style={{ fontSize: 14, color: glColor(totalEqGL) }}>{fmt$(totalEqGL)}</div></div>
-        <div><div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>OPTIONS</div><div style={{ fontSize: 14, color: glColor(totalOptGL) }}>{fmt$(totalOptGL)}</div></div>
-        <div style={{ marginLeft: "auto" }}><button onClick={refreshPrices} disabled={loading} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "8px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1, opacity: loading ? 0.6 : 1 }}>{loading ? "LOADING..." : "↻ REFRESH PRICES"}</button></div>
+        <div>
+          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>EQUITY</div>
+          <div style={{ fontSize: 14, color: glColor(totalEqGL) }}>{fmt$(totalEqGL)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#444", letterSpacing: 1.5, marginBottom: 3 }}>OPTIONS</div>
+          <div style={{ fontSize: 14, color: glColor(totalOptGL) }}>{fmt$(totalOptGL)}</div>
+        </div>
+        <div style={{ marginLeft: "auto" }}>
+          <button onClick={refreshPrices} disabled={loading} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "8px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1, opacity: loading ? 0.6 : 1 }}>
+            {loading ? "LOADING..." : "↻ REFRESH PRICES"}
+          </button>
+        </div>
       </div>
 
-      {/* Equity */}
-      {eqRows.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 10 }}>EQUITY / CRYPTO</div>
-          <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{["CLASS","TICKER","DIR","UNITS","ENTRY","LAST","MV","COST","G/L $","G/L %","SIZE","NOTES",""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
-              <tbody>{eqRows.map(r => (
+      {/* EQUITY TABLE */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2 }}>EQUITY POSITIONS</span>
+          <button onClick={() => setAddEq(true)} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+        </div>
+        <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #1e2128" }}>
+                {["STATUS","TERM","TICKER","UNITS","L/S","FILL","LAST","MV","COST","G/L $","G/L %","SIZE","THESIS",""].map(h => <th key={h} style={th}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {eqRows.map(r => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
-                  <td style={td}><span style={{ fontSize: 10, color: ASSET_COLOR[r.assetClass] }}>{r.assetClass.toUpperCase()}</span></td>
+                  <td style={{ ...td, color: "#4ade80" }}>{r.status}</td>
+                  <td style={{ ...td, color: "#555" }}>{r.term}</td>
                   <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{r.ticker}</td>
-                  <td style={{ ...td, color: r.direction === "Long" ? "#4ade80" : "#f87171" }}>{r.direction === "Long" ? "L" : "S"}</td>
                   <td style={{ ...td, color: "#8b9299" }}>{r.units}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${r.entryPrice.toFixed(2)}</td>
+                  <td style={{ ...td, color: r.ls === "L" ? "#4ade80" : "#f87171" }}>{r.ls}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>${r.fill.toFixed(2)}</td>
                   <td style={{ ...td, color: "#e2e8f0" }}>{r.last != null ? `$${r.last.toFixed(2)}` : "—"}</td>
                   <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.mv)}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.entryPrice * r.units)}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.fill * r.units)}</td>
                   <td style={{ ...td, color: glColor(r.gl), fontWeight: 600 }}>{fmt$(r.gl)}</td>
                   <td style={{ ...td, color: glColor(r.glPct) }}>{fmtPct(r.glPct)}</td>
-                  <td style={td}><span style={{ fontSize: 11, color: sizeColor(r.sizeX), fontWeight: 600 }}>{r.sizeX.toFixed(2)}x</span></td>
-                  <td style={{ ...td, color: "#555" }}>{r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : (r.notes || "—")}</td>
-                  <td style={td}><span style={{ fontSize: 10, color: "#333" }}>→ blotter</span></td>
+                  <td style={{ ...td }}>
+                    {(() => { const x = (r.fill * r.units) / eqBase; return <span style={{ fontSize: 11, color: sizeColor(x), fontWeight: 600 }}>{x.toFixed(2)}x</span>; })()}
+                  </td>
+                  <td style={{ ...td, fontSize: 11, color: "#c9a84c", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : "—"}
+                  </td>
+                  <td style={td}>
+                    <button onClick={() => onChange({ ...data, equityPositions: data.equityPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
+                  </td>
                 </tr>
-              ))}</tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {/* Options */}
-      {optRows.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 10 }}>OPTIONS</div>
-          <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{["TICKER","P/C","STRIKE","EXP","UNITS","FILL","BASIS","EQ ENTRY","EQ LAST","G/L $","G/L %","SIZE","NOTES",""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
-              <tbody>{optRows.map(r => (
+      {/* OPTIONS TABLE */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2 }}>OPTIONS POSITIONS</span>
+          <button onClick={() => setAddOpt(true)} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+        </div>
+        <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #1e2128" }}>
+                {["TICKER","P/C","STRIKE","EXP","UNITS","FILL","BASIS","EQ ENTRY","EQ LAST","G/L $","G/L %","SIZE","THESIS",""].map(h => <th key={h} style={th}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {optRows.map(r => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
                   <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{r.ticker}</td>
-                  <td style={{ ...td, color: r.pc === "C" ? "#4ade80" : "#f87171" }}>{r.pc ?? "—"}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{r.strike ? `$${r.strike}` : "—"}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{r.expiration ?? "—"}</td>
+                  <td style={{ ...td, color: r.pc === "C" ? "#4ade80" : "#f87171" }}>{r.pc}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>${r.strike}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>{r.expiration}</td>
                   <td style={{ ...td, color: "#8b9299" }}>{r.units}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${r.entryPrice.toFixed(2)}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.entryPrice * r.units * 100)}</td>
-                  <td style={{ ...td, color: "#555" }}>{r.eqEntryPrice ? `$${r.eqEntryPrice.toFixed(2)}` : "—"}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>${r.fill.toFixed(2)}</td>
+                  <td style={{ ...td, color: "#8b9299" }}>{fmt$(r.basis)}</td>
+                  <td style={{ ...td, color: "#555" }}>${r.eqPrice.toFixed(2)}</td>
                   <td style={{ ...td, color: "#e2e8f0" }}>{r.eqLast != null ? `$${r.eqLast.toFixed(2)}` : "—"}</td>
                   <td style={{ ...td, color: glColor(r.gl), fontWeight: 600 }}>{fmt$(r.gl)}</td>
                   <td style={{ ...td, color: glColor(r.glPct) }}>{fmtPct(r.glPct)}</td>
-                  <td style={td}><span style={{ fontSize: 11, color: sizeColor(r.sizeX), fontWeight: 600 }}>{r.sizeX.toFixed(2)}x</span></td>
-                  <td style={{ ...td, color: "#555" }}>{r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : (r.notes || "—")}</td>
-                  <td style={td}><span style={{ fontSize: 10, color: "#333" }}>→ blotter</span></td>
+                  <td style={{ ...td }}>
+                    {(() => { const x = r.basis / optBase; return <span style={{ fontSize: 11, color: sizeColor(x), fontWeight: 600 }}>{x.toFixed(2)}x</span>; })()}
+                  </td>
+                  <td style={{ ...td, fontSize: 11 }}>
+                    {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", textDecoration: "none" }}>↗ link</a> : "—"}
+                  </td>
+                  <td style={td}>
+                    <button onClick={() => onChange({ ...data, optionsPositions: data.optionsPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
+                  </td>
                 </tr>
-              ))}</tbody>
-            </table>
-          </div>
-          <p style={{ fontSize: 10, color: "#333", marginTop: 6 }}>G/L = (eq last − eq entry) × contracts × 100. Reversed for puts.</p>
+              ))}
+            </tbody>
+          </table>
         </div>
+        <p style={{ fontSize: 10, color: "#333", marginTop: 6, letterSpacing: 0.5 }}>
+          G/L = (eq last − eq entry) × contracts × 100. Reversed for puts.
+        </p>
+      </div>
+
+      {addEq && (
+        <Modal title="Add Equity Position" onClose={() => setAddEq(false)}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Field label="Ticker"><input style={iStyle} value={eqF.ticker} onChange={e => setEqF(p => ({ ...p, ticker: e.target.value }))} /></Field>
+            <Field label="Units"><input style={iStyle} type="number" value={eqF.units} onChange={e => setEqF(p => ({ ...p, units: e.target.value }))} /></Field>
+            <Field label="Fill Price"><input style={iStyle} type="number" value={eqF.fill} onChange={e => setEqF(p => ({ ...p, fill: e.target.value }))} /></Field>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Field label="Term"><select style={selStyle} value={eqF.term} onChange={e => setEqF(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
+            <Field label="L/S"><select style={selStyle} value={eqF.ls} onChange={e => setEqF(p => ({ ...p, ls: e.target.value }))}><option>L</option><option>S</option></select></Field>
+          </div>
+          <Field label="Thesis Link (OneDrive URL)"><input style={iStyle} value={eqF.thesis} onChange={e => setEqF(p => ({ ...p, thesis: e.target.value }))} placeholder="https://..." /></Field>
+          <SaveBtn onClick={saveEq} label="ADD POSITION" />
+        </Modal>
       )}
 
-      {/* Strategies */}
-      {strategyTrades.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 10, color: "#e879f9", letterSpacing: 2, marginBottom: 10 }}>STRATEGIES</div>
-          <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{["STRATEGY","TICKER","DESCRIPTION","CONTRACTS","NET PREM","MAX PROFIT","MAX LOSS","ENTRY DATE","SIZE",""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
-              <tbody>{strategyTrades.map(t => {
-                const sizeX = Math.abs(t.netPremium ?? 0) / settings.optionsBaseline;
-                return <tr key={t.id} style={{ borderBottom: "1px solid #0f1117" }}>
-                  <td style={td}><span style={{ fontSize: 10, color: "#e879f9" }}>{t.strategyType?.toUpperCase()}</span></td>
-                  <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{t.ticker}</td>
-                  <td style={{ ...td, color: "#555" }}>{t.description || "—"}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{t.contracts}x</td>
-                  <td style={{ ...td, color: t.netPremium != null && t.netPremium <= 0 ? "#4ade80" : "#f87171", fontWeight: 600 }}>{t.netPremium != null ? `${t.netPremium <= 0 ? "+" : ""}${fmt$(Math.abs(t.netPremium))} ${t.netPremium <= 0 ? "cr" : "db"}` : "—"}</td>
-                  <td style={{ ...td, color: "#4ade80" }}>{fmt$(t.maxProfit)}</td>
-                  <td style={{ ...td, color: "#f87171" }}>{fmt$(t.maxLoss)}</td>
-                  <td style={{ ...td, color: "#555" }}>{t.entryDate || "—"}</td>
-                  <td style={td}><span style={{ fontSize: 11, color: sizeColor(sizeX), fontWeight: 600 }}>{sizeX.toFixed(2)}x</span></td>
-                  <td style={td}><span style={{ fontSize: 10, color: "#333" }}>→ blotter</span></td>
-                </tr>;
-              })}</tbody>
-            </table>
+      {addOpt && (
+        <Modal title="Add Options Position" onClose={() => setAddOpt(false)}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Field label="Ticker"><input style={iStyle} value={optF.ticker} onChange={e => setOptF(p => ({ ...p, ticker: e.target.value }))} /></Field>
+            <Field label="P/C"><select style={selStyle} value={optF.pc} onChange={e => setOptF(p => ({ ...p, pc: e.target.value }))}><option>C</option><option>P</option></select></Field>
+            <Field label="L/S"><select style={selStyle} value={optF.ls} onChange={e => setOptF(p => ({ ...p, ls: e.target.value }))}><option>L</option><option>S</option></select></Field>
           </div>
-        </div>
-      )}
-
-      {/* Other */}
-      {otherTrades.length > 0 && (
-        <div>
-          <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 2, marginBottom: 10 }}>FUTURES / FOREX / OTHER</div>
-          <div style={{ overflowX: "auto", background: "#0a0c10", borderRadius: 8, border: "1px solid #1e2128" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{["CLASS","TICKER","DESCRIPTION","DIR","UNITS","ENTRY","ENTRY DATE","SIZE","NOTES",""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
-              <tbody>{otherTrades.map(t => {
-                const baseline = t.assetClass === "Futures" ? settings.futuresBaseline : settings.forexBaseline;
-                const sizeX = (t.entryPrice * t.units) / baseline;
-                return <tr key={t.id} style={{ borderBottom: "1px solid #0f1117" }}>
-                  <td style={td}><span style={{ fontSize: 10, color: ASSET_COLOR[t.assetClass] }}>{t.assetClass.toUpperCase()}</span></td>
-                  <td style={{ ...td, color: "#e2e8f0", fontWeight: 600 }}>{t.ticker}</td>
-                  <td style={{ ...td, color: "#555" }}>{t.description || "—"}</td>
-                  <td style={{ ...td, color: t.direction === "Long" ? "#4ade80" : "#f87171" }}>{t.direction === "Long" ? "L" : "S"}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>{t.units}</td>
-                  <td style={{ ...td, color: "#8b9299" }}>${t.entryPrice.toFixed(2)}</td>
-                  <td style={{ ...td, color: "#555" }}>{t.entryDate || "—"}</td>
-                  <td style={td}><span style={{ fontSize: 11, color: sizeColor(sizeX), fontWeight: 600 }}>{sizeX.toFixed(2)}x</span></td>
-                  <td style={{ ...td, color: "#555" }}>{t.notes || "—"}</td>
-                  <td style={td}><span style={{ fontSize: 10, color: "#333" }}>→ blotter</span></td>
-                </tr>;
-              })}</tbody>
-            </table>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Field label="Strike"><input style={iStyle} type="number" value={optF.strike} onChange={e => setOptF(p => ({ ...p, strike: e.target.value }))} /></Field>
+            <Field label="Expiration"><input style={iStyle} type="date" value={optF.expiration} onChange={e => setOptF(p => ({ ...p, expiration: e.target.value }))} /></Field>
           </div>
-        </div>
-      )}
-
-      {openTrades.length === 0 && strategyTrades.length === 0 && (
-        <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO OPEN POSITIONS — ADD TRADES IN BLOTTER</div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Field label="Fill (per share)"><input style={iStyle} type="number" value={optF.fill} onChange={e => setOptF(p => ({ ...p, fill: e.target.value }))} /></Field>
+            <Field label="Contracts"><input style={iStyle} type="number" value={optF.units} onChange={e => setOptF(p => ({ ...p, units: e.target.value }))} /></Field>
+          </div>
+          <Field label="Thesis Link (OneDrive URL)"><input style={iStyle} value={optF.thesis} onChange={e => setOptF(p => ({ ...p, thesis: e.target.value }))} placeholder="https://..." /></Field>
+          <SaveBtn onClick={saveOpt} label="ADD POSITION" />
+        </Modal>
       )}
     </div>
   );
 }
 
-// ─── Research Tab ─────────────────────────────────────────────────────────────
-type ResearchEntry = { id: number; [key: string]: unknown };
+// ─── Research Tab (Macro / Market Updates / Trade Ideas / Thesis) ─────────────
+
 type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates";
 
 function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
-  const blank: Record<string, string> = type === "thesis" ? { ticker: "", title: "", conviction: "High", summary: "", catalysts: "", risks: "", links: "" } : type === "tradeIdeas" ? { ticker: "", direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" } : { title: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "" };
+
+  const blank: Record<string, string> = type === "thesis"
+    ? { ticker: "", title: "", conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
+    : type === "tradeIdeas"
+    ? { ticker: "", direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
+    : { title: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "" };
+
   const [form, setForm] = useState<Record<string, string>>(blank);
-  function save() { if (editing !== null) { onSave(items.map((x, i) => i === editing ? { ...form, id: x.id } : x)); setEditing(null); } else onSave([{ ...form, id: Date.now() }, ...items]); setForm(blank); setOpen(false); }
+
+  function save() {
+    if (editing !== null) {
+      onSave(items.map((x, i) => i === editing ? { ...form, id: x.id } : x));
+      setEditing(null);
+    } else {
+      onSave([{ ...form, id: Date.now() }, ...items]);
+    }
+    setForm(blank);
+    setOpen(false);
+  }
+
   function edit(i: number) { setForm(items[i] as Record<string, string>); setEditing(i); setOpen(true); }
+  function remove(i: number) { onSave(items.filter((_, j) => j !== i)); }
+
   const convColor: Record<string, string> = { High: "#4ade80", Medium: "#c9a84c", Low: "#f87171" };
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <button onClick={() => { setForm(blank); setEditing(null); setOpen(true); }} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ NEW ENTRY</button>
+        <button onClick={() => { setForm(blank); setEditing(null); setOpen(true); }}
+          style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4ade80", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
+          + NEW ENTRY
+        </button>
       </div>
-      {items.length === 0 && <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES</div>}
+
+      {items.length === 0 && (
+        <div style={{ textAlign: "center", padding: 80, color: "#2a2d35", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES</div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {items.map((item, i) => {
           const e = item as Record<string, string>;
@@ -257,40 +392,116 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             <div key={item.id} style={{ background: "#0a0c10", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
-                  {(type === "thesis" || type === "tradeIdeas") && e.ticker && <span style={{ fontSize: 15, color: "#e2e8f0", fontWeight: 600 }}>{e.ticker}</span>}
+                  {(type === "thesis" || type === "tradeIdeas") && e.ticker && (
+                    <span style={{ fontSize: 15, color: "#e2e8f0", fontWeight: 600 }}>{e.ticker}</span>
+                  )}
                   {e.title && <span style={{ fontSize: 13, color: "#8b9299" }}>{e.title}</span>}
-                  {type === "thesis" && e.conviction && <span style={{ fontSize: 10, color: convColor[e.conviction], border: `1px solid ${convColor[e.conviction]}40`, borderRadius: 3, padding: "2px 7px" }}>{e.conviction}</span>}
-                  {type === "tradeIdeas" && e.direction && <span style={{ fontSize: 10, color: e.direction === "Long" ? "#4ade80" : "#f87171", border: `1px solid ${e.direction === "Long" ? "#4ade8040" : "#f8717140"}`, borderRadius: 3, padding: "2px 7px" }}>{e.direction} · {e.term}</span>}
-                  {(type === "macro" || type === "marketUpdates") && e.date && <span style={{ fontSize: 11, color: "#444" }}>{e.date}</span>}
+                  {type === "thesis" && e.conviction && (
+                    <span style={{ fontSize: 10, color: convColor[e.conviction], border: `1px solid ${convColor[e.conviction]}40`, borderRadius: 3, padding: "2px 7px" }}>{e.conviction}</span>
+                  )}
+                  {type === "tradeIdeas" && e.direction && (
+                    <span style={{ fontSize: 10, color: e.direction === "Long" ? "#4ade80" : "#f87171", border: `1px solid ${e.direction === "Long" ? "#4ade8040" : "#f8717140"}`, borderRadius: 3, padding: "2px 7px" }}>{e.direction} · {e.term}</span>
+                  )}
+                  {(type === "macro" || type === "marketUpdates") && e.date && (
+                    <span style={{ fontSize: 11, color: "#444" }}>{e.date}</span>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
                   <button onClick={() => edit(i)} style={{ background: "none", border: "1px solid #2a2d35", color: "#555", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
-                  <button onClick={() => onSave(items.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15 }}>✕</button>
+                  <button onClick={() => remove(i)} style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div>
               </div>
-              {(type === "macro" || type === "marketUpdates") && e.tags && <div style={{ marginBottom: 8, display: "flex", flexWrap: "wrap" as const, gap: 4 }}>{e.tags.split(",").map(t => t.trim()).filter(Boolean).map(t => <span key={t} style={{ fontSize: 10, color: "#c9a84c", background: "#c9a84c10", border: "1px solid #c9a84c25", borderRadius: 3, padding: "2px 7px" }}>{t}</span>)}</div>}
-              {(e.summary || e.thesis || e.body) && <p style={{ fontSize: 13, color: "#8b9299", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>}
-              {type === "thesis" && (e.catalysts || e.risks) && <div style={{ display: "flex", gap: 24, marginTop: 6 }}>{e.catalysts && <div style={{ fontSize: 11, color: "#4ade80" }}>▲ {e.catalysts}</div>}{e.risks && <div style={{ fontSize: 11, color: "#f87171" }}>▼ {e.risks}</div>}</div>}
-              {type === "tradeIdeas" && (e.entry || e.target || e.stop) && <div style={{ display: "flex", gap: 20, marginTop: 6 }}>{e.entry && <span style={{ fontSize: 11, color: "#555" }}>ENTRY <span style={{ color: "#e2e8f0" }}>{e.entry}</span></span>}{e.target && <span style={{ fontSize: 11, color: "#555" }}>TARGET <span style={{ color: "#4ade80" }}>{e.target}</span></span>}{e.stop && <span style={{ fontSize: 11, color: "#555" }}>STOP <span style={{ color: "#f87171" }}>{e.stop}</span></span>}</div>}
-              {e.links && <div style={{ marginTop: 8, display: "flex", flexDirection: "column" as const, gap: 2 }}>{e.links.split("\n").filter(Boolean).map((l, j) => <a key={j} href={l} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#c9a84c", textDecoration: "none" }}>↗ {l.length > 70 ? l.slice(0, 70) + "…" : l}</a>)}</div>}
+
+              {(type === "macro" || type === "marketUpdates") && e.tags && (
+                <div style={{ marginBottom: 8, display: "flex", flexWrap: "wrap" as const, gap: 4 }}>
+                  {e.tags.split(",").map(t => t.trim()).filter(Boolean).map(t => (
+                    <span key={t} style={{ fontSize: 10, color: "#c9a84c", background: "#c9a84c10", border: "1px solid #c9a84c25", borderRadius: 3, padding: "2px 7px" }}>{t}</span>
+                  ))}
+                </div>
+              )}
+
+              {(e.summary || e.thesis || e.body) && (
+                <p style={{ fontSize: 13, color: "#8b9299", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>
+              )}
+
+              {type === "thesis" && (e.catalysts || e.risks) && (
+                <div style={{ display: "flex", gap: 24, marginTop: 6 }}>
+                  {e.catalysts && <div style={{ fontSize: 11, color: "#4ade80" }}>▲ {e.catalysts}</div>}
+                  {e.risks && <div style={{ fontSize: 11, color: "#f87171" }}>▼ {e.risks}</div>}
+                </div>
+              )}
+
+              {type === "tradeIdeas" && (e.entry || e.target || e.stop) && (
+                <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
+                  {e.entry && <span style={{ fontSize: 11, color: "#555" }}>ENTRY <span style={{ color: "#e2e8f0" }}>{e.entry}</span></span>}
+                  {e.target && <span style={{ fontSize: 11, color: "#555" }}>TARGET <span style={{ color: "#4ade80" }}>{e.target}</span></span>}
+                  {e.stop && <span style={{ fontSize: 11, color: "#555" }}>STOP <span style={{ color: "#f87171" }}>{e.stop}</span></span>}
+                </div>
+              )}
+
+              {e.links && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column" as const, gap: 2 }}>
+                  {e.links.split("\n").filter(Boolean).map((l, j) => (
+                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#c9a84c", textDecoration: "none" }}>
+                      ↗ {l.length > 70 ? l.slice(0, 70) + "…" : l}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
       {open && (
         <Modal title={editing !== null ? "Edit Entry" : "New Entry"} onClose={() => { setOpen(false); setEditing(null); }}>
-          {type === "thesis" && <><div style={{ display: "flex", gap: 10 }}><Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field><Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field></div><Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field><Field label="Summary"><textarea style={taStyle} value={form.summary || ""} onChange={e => setForm(p => ({ ...p, summary: e.target.value }))} /></Field><Field label="Catalysts"><textarea style={{ ...taStyle, height: 60 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field><Field label="Risks"><textarea style={{ ...taStyle, height: 60 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field><Field label="Links"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field></>}
-          {type === "tradeIdeas" && <><div style={{ display: "flex", gap: 10 }}><Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field><Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field><Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field></div><Field label="Thesis"><textarea style={taStyle} value={form.thesis || ""} onChange={e => setForm(p => ({ ...p, thesis: e.target.value }))} /></Field><div style={{ display: "flex", gap: 10 }}><Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field><Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field><Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field></div><Field label="Links"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field></>}
-          {(type === "macro" || type === "marketUpdates") && <><div style={{ display: "flex", gap: 10 }}><Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field><Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field></div><Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field><Field label="Body"><textarea style={{ ...taStyle, height: 140 }} value={form.body || ""} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} /></Field><Field label="Links"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field></>}
-          <button onClick={save} style={{ background: "#c9a84c", color: "#0a0c10", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>SAVE</button>
+          {type === "thesis" && <>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
+            </div>
+            <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
+            <Field label="Summary"><textarea style={taStyle} value={form.summary || ""} onChange={e => setForm(p => ({ ...p, summary: e.target.value }))} /></Field>
+            <Field label="Catalysts"><textarea style={{ ...taStyle, height: 60 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
+            <Field label="Risks"><textarea style={{ ...taStyle, height: 60 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
+            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+          </>}
+
+          {type === "tradeIdeas" && <>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
+              <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
+            </div>
+            <Field label="Thesis"><textarea style={taStyle} value={form.thesis || ""} onChange={e => setForm(p => ({ ...p, thesis: e.target.value }))} /></Field>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
+              <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
+              <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
+            </div>
+            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+          </>}
+
+          {(type === "macro" || type === "marketUpdates") && <>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
+              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+            </div>
+            <Field label="Tags (comma separated)"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
+            <Field label="Body"><textarea style={{ ...taStyle, height: 140 }} value={form.body || ""} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} /></Field>
+            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+          </>}
+
+          <SaveBtn onClick={save} />
         </Modal>
       )}
     </div>
   );
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "TRADE IDEAS", "SECURITY THESIS", "MACRO", "MARKET UPDATES"];
+// ─── Root Component ───────────────────────────────────────────────────────────
+
+const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "JOURNAL", "TRADE IDEAS", "SECURITY THESIS", "MACRO", "MARKET UPDATES"];
 
 export default function ResearchDB() {
   const [tab, setTab] = useState(0);
@@ -298,23 +509,36 @@ export default function ResearchDB() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  useEffect(() => { fetch("/api/data").then(r => r.json()).then(setData); }, []);
+  // Load on mount
+  useEffect(() => {
+    fetch("/api/data").then(r => r.json()).then(setData);
+  }, []);
+
+  // Debounced auto-save
   useEffect(() => {
     if (!data) return;
     const t = setTimeout(async () => {
       setSaving(true);
       await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      setSaving(false); setLastSaved(new Date());
+      setSaving(false);
+      setLastSaved(new Date());
     }, 800);
     return () => clearTimeout(t);
   }, [data]);
 
   const update = useCallback((d: DBData) => setData(d), []);
 
-  if (!data) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#080a0e" }}><div style={{ fontSize: 11, color: "#333", letterSpacing: 3 }}>LOADING...</div></div>;
+  if (!data) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#080a0e" }}>
+        <div style={{ fontSize: 11, color: "#333", letterSpacing: 3 }}>LOADING...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#080a0e" }}>
+      {/* Header */}
       <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex", alignItems: "center", height: 52 }}>
         <div style={{ width: 3, height: 18, background: "#c9a84c", borderRadius: 2, marginRight: 14 }} />
         <span style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 3 }}>RESEARCH DB</span>
@@ -323,17 +547,30 @@ export default function ResearchDB() {
           {!saving && lastSaved && <span style={{ fontSize: 10, color: "#2a2d35", letterSpacing: 1 }}>SAVED {lastSaved.toLocaleTimeString()}</span>}
         </div>
       </div>
-      <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex", overflowX: "auto" }}>
-        {TABS.map((t, i) => <button key={i} onClick={() => setTab(i)} style={{ background: "none", border: "none", borderBottom: tab === i ? "2px solid #c9a84c" : "2px solid transparent", color: tab === i ? "#c9a84c" : "#3a3d45", padding: "13px 18px", fontSize: 10, letterSpacing: 2, cursor: "pointer", transition: "color 0.15s", marginBottom: -1, whiteSpace: "nowrap" as const }}>{t}</button>)}
+
+      {/* Tab bar */}
+      <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex" }}>
+        {TABS.map((t, i) => (
+          <button key={i} onClick={() => setTab(i)} style={{
+            background: "none", border: "none",
+            borderBottom: tab === i ? "2px solid #c9a84c" : "2px solid transparent",
+            color: tab === i ? "#c9a84c" : "#3a3d45",
+            padding: "13px 18px", fontSize: 10, letterSpacing: 2, cursor: "pointer",
+            transition: "color 0.15s", marginBottom: -1,
+          }}>{t}</button>
+        ))}
       </div>
+
+      {/* Content */}
       <div style={{ padding: "28px 28px", maxWidth: 1280, margin: "0 auto" }}>
         {tab === 0 && <PositionsTab data={data} onChange={update} />}
-        {tab === 1 && <BlotterTab data={data} onChange={update} />}
-        {tab === 2 && <AnalyticsTab data={data} />}
-        {tab === 3 && <ResearchTab items={data.tradeIdeas ?? []} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
-        {tab === 4 && <ResearchTab items={data.thesis ?? []} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
-        {tab === 5 && <ResearchTab items={data.macro ?? []} onSave={items => update({ ...data, macro: items })} type="macro" />}
-        {tab === 6 && <ResearchTab items={data.marketUpdates ?? []} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+        {tab === 1 && <BlotterTab data={data as any} onChange={update as any} />}
+        {tab === 2 && <AnalyticsTab data={data as any} />}
+        {tab === 3 && <JournalTab data={data as any} onChange={update as any} />}
+        {tab === 4 && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
+        {tab === 5 && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
+        {tab === 6 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
+        {tab === 7 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
       </div>
     </div>
   );
