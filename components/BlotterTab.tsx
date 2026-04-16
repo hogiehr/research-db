@@ -120,6 +120,12 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
   const [closeGL, setCloseGL] = useState(""), [closeDate, setCloseDate] = useState(new Date().toISOString().slice(0, 10));
   const blotter = data.blotter ?? [];
   function set(k: string, v: unknown) { setForm(p => ({ ...p, [k]: v })); }
+  const canBuildStrategy = !!form.ticker.trim() && form.units > 0;
+
+  function openStrategyBuilder() {
+    if (!canBuildStrategy) return;
+    setStrategyStep(true);
+  }
 
   function save() {
     if (editing !== null) onChange({ ...data, blotter: blotter.map(t => t.id === editing ? { ...form, id: editing } : t) });
@@ -236,8 +242,8 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
                 <div style={{ borderTop: "1px solid #1e2128", paddingTop: 12, marginTop: 4 }}>
                   <div style={{ fontSize: 10, color: "#a21caf", letterSpacing: 1.5, marginBottom: 10 }}>MULTI-LEG STRATEGY</div>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-                    <Field label="Strategy Type"><select style={iStyle} value={selectedStrategy} onChange={e => setSelectedStrategy(e.target.value as StrategyType)}>{STRATEGIES.map(s => <option key={s}>{s}</option>)}</select></Field>
-                    <div style={{ marginBottom: 12 }}><button onClick={() => { if (form.ticker) setStrategyStep(true); }} disabled={!form.ticker} style={{ background: "#f0eaf8", border: "1px solid #5a3a7a", color: "#a21caf", borderRadius: 6, padding: "8px 16px", fontSize: 11, fontWeight: 600, cursor: form.ticker ? "pointer" : "not-allowed", letterSpacing: 1, opacity: form.ticker ? 1 : 0.4 }}>BUILD LEGS →</button></div>
+                    <Field label="Strategy Type"><select style={iStyle} value={selectedStrategy} onChange={e => { setSelectedStrategy(e.target.value as StrategyType); if (form.ticker.trim() && form.units > 0) setStrategyStep(true); }}>{STRATEGIES.map(s => <option key={s}>{s}</option>)}</select></Field>
+                    <div style={{ marginBottom: 12 }}><button type="button" onClick={openStrategyBuilder} disabled={!canBuildStrategy} style={{ background: "#f0eaf8", border: "1px solid #5a3a7a", color: "#a21caf", borderRadius: 6, padding: "8px 16px", fontSize: 11, fontWeight: 600, cursor: canBuildStrategy ? "pointer" : "not-allowed", letterSpacing: 1, opacity: canBuildStrategy ? 1 : 0.4 }}>BUILD LEGS →</button></div>
                   </div>
                 </div>
               </>}
