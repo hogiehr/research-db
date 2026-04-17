@@ -6,6 +6,7 @@ import AnalyticsTab from "./AnalyticsTab";
 import JournalTab from "./JournalTab";
 import BlobUploadControl from "./BlobUploadControl";
 import MarkdownArticle from "./MarkdownArticle";
+import RichArticleEditor from "./RichArticleEditor";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,22 @@ function appendMarkdownImages(current: string, urls: string[]) {
   return current.trim() ? `${current.trim()}\n\n${imageBlock}` : imageBlock;
 }
 
+function looksLikeHtml(value: string) {
+  return /<\s*(p|div|h1|h2|h3|blockquote|ul|ol|li|figure|img|a|strong|em)\b/i.test(value);
+}
+
+function ArticleContent({ content }: { content: string }) {
+  if (looksLikeHtml(content)) {
+    return (
+      <div
+        style={{ color: "#2a2f3c", fontFamily: "'Lora', serif", fontSize: 14, lineHeight: 1.9 }}
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+  return <MarkdownArticle content={content} />;
+}
+
 function MarkdownEditor({
   label,
   value,
@@ -139,6 +156,35 @@ function MarkdownEditor({
         </div>
       )}
     </Field>
+  );
+}
+
+function ComposerShell({
+  children,
+  onBack,
+  onSave,
+  saveLabel,
+  title,
+}: {
+  children: React.ReactNode;
+  onBack: () => void;
+  onSave: () => void;
+  saveLabel: string;
+  title: string;
+}) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 120, background: "#f7f2ea", overflowY: "auto" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #ddd6c7", background: "rgba(247,242,234,0.96)", backdropFilter: "blur(6px)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button onClick={onBack} style={{ background: "none", border: "1px solid #c9c0b0", borderRadius: 999, color: "#3a3f4c", cursor: "pointer", fontSize: 13, padding: "6px 12px" }}>← Back</button>
+          <span style={{ fontSize: 11, color: "#a07828", letterSpacing: 2 }}>{title}</span>
+        </div>
+        <button onClick={onSave} style={{ background: "#ff7a1a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>{saveLabel}</button>
+      </div>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "30px 28px 40px", display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 28, alignItems: "start" }}>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -407,6 +453,7 @@ type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates" | "sellS
 function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
     ? { ticker: "", title: "", conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
@@ -490,7 +537,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
               {(e.summary || e.thesis || e.body) && (
                 <div style={{ marginBottom: 8 }}>
-                  <MarkdownArticle content={String(e.summary || e.thesis || e.body)} />
+                  <ArticleContent content={String(e.summary || e.thesis || e.body)} />
                 </div>
               )}
 
@@ -534,7 +581,59 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
         })}
       </div>
 
-      {open && (
+      {open && useComposer && (
+        <ComposerShell
+          onBack={() => { setOpen(false); setEditing(null); }}
+          onSave={save}
+          saveLabel={editing !== null ? "SAVE ENTRY" : "PUBLISH ENTRY"}
+          title={editing !== null ? "EDIT ENTRY" : "NEW ENTRY"}
+        >
+          <div style={{ background: "#efebe2", border: "1px solid #ddd6c7", borderRadius: 14, padding: 18, position: "sticky", top: 86 }}>
+            {type === "thesis" && <>
+              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
+              <Field label="Catalysts"><textarea style={{ ...taStyle, height: 84 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
+              <Field label="Risks"><textarea style={{ ...taStyle, height: 84 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
+              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            </>}
+            {type === "tradeIdeas" && <>
+              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
+              <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
+              <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
+              <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
+              <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
+              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            </>}
+            {(type === "macro" || type === "marketUpdates") && <>
+              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+              <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
+              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            </>}
+          </div>
+          <div>
+            <input
+              style={{ width: "100%", border: "none", background: "transparent", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, outline: "none", marginBottom: 10 }}
+              value={form.title || ""}
+              onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+              placeholder="Title"
+            />
+            <div style={{ color: "#7b8794", fontFamily: "'Lora', serif", fontSize: 22, lineHeight: 1.3, marginBottom: 24 }}>
+              {type === "tradeIdeas" && `${form.ticker || "Ticker"} · ${form.direction || "Long"} · ${form.term || "ST"}`}
+              {type === "thesis" && `${form.ticker || "Ticker"} · ${form.conviction || "High"} conviction`}
+              {(type === "macro" || type === "marketUpdates") && `${form.date || "Date"}${form.tags ? ` · ${form.tags}` : ""}`}
+            </div>
+            <RichArticleEditor
+              folder={`research/${type}-inline`}
+              value={String(type === "thesis" ? form.summary || "" : type === "tradeIdeas" ? form.thesis || "" : form.body || "")}
+              onChange={value => setForm(p => ({ ...p, [type === "thesis" ? "summary" : type === "tradeIdeas" ? "thesis" : "body"]: value }))}
+              placeholder="Start writing..."
+            />
+          </div>
+        </ComposerShell>
+      )}
+
+      {open && !useComposer && (
         <Modal title={editing !== null ? "Edit Entry" : "New Entry"} onClose={() => { setOpen(false); setEditing(null); }}>
           {type === "thesis" && <>
             <div style={{ display: "flex", gap: 10 }}>
