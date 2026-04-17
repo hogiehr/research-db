@@ -28,12 +28,12 @@ export type Settings = {
 
 export type DBData = {
   tradeIdeas: ResearchEntry[]; thesis: ResearchEntry[];
-  macro: ResearchEntry[]; marketUpdates: ResearchEntry[];
+  macro: ResearchEntry[]; marketUpdates: ResearchEntry[]; sellSideResearch: ResearchEntry[];
   blotter: TradeEntry[]; settings: Settings;
 };
 
 const DEFAULT_DATA: DBData = {
-  tradeIdeas: [], thesis: [], macro: [], marketUpdates: [], blotter: [],
+  tradeIdeas: [], thesis: [], macro: [], marketUpdates: [], sellSideResearch: [], blotter: [],
   settings: { equityBaseline: 900, optionsBaseline: 600, futuresBaseline: 1000, forexBaseline: 1000 },
 };
 
@@ -44,6 +44,7 @@ export async function getData(): Promise<DBData> {
   const val = await kv.get<DBData>(KEY);
   if (!val) { await kv.set(KEY, DEFAULT_DATA); return DEFAULT_DATA; }
   if (!val.blotter) val.blotter = [];
+  if (!val.sellSideResearch) val.sellSideResearch = [];
   if (!val.settings) val.settings = { equityBaseline: 900, optionsBaseline: 600, futuresBaseline: 1000, forexBaseline: 1000 };
   if (!val.settings.futuresBaseline) { val.settings.futuresBaseline = 1000; val.settings.forexBaseline = 1000; }
   val.blotter = val.blotter.filter(t => !(SEED_TICKERS.has(t.ticker) && t.entryDate === ""));

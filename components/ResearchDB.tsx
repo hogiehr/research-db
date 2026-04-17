@@ -24,6 +24,7 @@ type DBData = {
   thesis: ResearchEntry[];
   macro: ResearchEntry[];
   marketUpdates: ResearchEntry[];
+  sellSideResearch: ResearchEntry[];
   blotter: ResearchEntry[];
   settings: { equityBaseline: number; optionsBaseline: number };
 };
@@ -342,7 +343,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
 
 // ─── Research Tab (Macro / Market Updates / Trade Ideas / Thesis) ─────────────
 
-type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates";
+type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates" | "sellSideResearch";
 
 function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
   const [open, setOpen] = useState(false);
@@ -352,6 +353,8 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
     ? { ticker: "", title: "", conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
     : type === "tradeIdeas"
     ? { ticker: "", direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
+    : type === "sellSideResearch"
+    ? { ticker: "", firm: "", analyst: "", title: "", date: new Date().toISOString().slice(0, 10), rating: "", notes: "", links: "" }
     : { title: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "" };
 
   const [form, setForm] = useState<Record<string, string>>(blank);
@@ -392,7 +395,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             <div key={item.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
-                  {(type === "thesis" || type === "tradeIdeas") && e.ticker && (
+                  {(type === "thesis" || type === "tradeIdeas" || type === "sellSideResearch") && e.ticker && (
                     <span style={{ fontSize: 15, color: "#0d0f14", fontWeight: 600 }}>{e.ticker}</span>
                   )}
                   {e.title && <span style={{ fontSize: 13, color: "#2a2f3c" }}>{e.title}</span>}
@@ -401,6 +404,12 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                   )}
                   {type === "tradeIdeas" && e.direction && (
                     <span style={{ fontSize: 10, color: e.direction === "Long" ? "#16a34a" : "#dc2626", border: `1px solid ${e.direction === "Long" ? "#4ade8040" : "#f8717140"}`, borderRadius: 3, padding: "2px 7px" }}>{e.direction} · {e.term}</span>
+                  )}
+                  {type === "sellSideResearch" && e.firm && (
+                    <span style={{ fontSize: 10, color: "#2563eb", border: "1px solid #93c5fd80", borderRadius: 3, padding: "2px 7px" }}>{e.firm}</span>
+                  )}
+                  {type === "sellSideResearch" && e.date && (
+                    <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
                   )}
                   {(type === "macro" || type === "marketUpdates") && e.date && (
                     <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
@@ -424,6 +433,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <p style={{ fontSize: 13, color: "#2a2f3c", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>
               )}
 
+              {type === "sellSideResearch" && e.notes && (
+                <p style={{ fontSize: 13, color: "#2a2f3c", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.notes}</p>
+              )}
+
               {type === "thesis" && (e.catalysts || e.risks) && (
                 <div style={{ display: "flex", gap: 24, marginTop: 6 }}>
                   {e.catalysts && <div style={{ fontSize: 11, color: "#16a34a" }}>▲ {e.catalysts}</div>}
@@ -436,6 +449,13 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                   {e.entry && <span style={{ fontSize: 11, color: "#3a3f4c" }}>ENTRY <span style={{ color: "#0d0f14" }}>{e.entry}</span></span>}
                   {e.target && <span style={{ fontSize: 11, color: "#3a3f4c" }}>TARGET <span style={{ color: "#16a34a" }}>{e.target}</span></span>}
                   {e.stop && <span style={{ fontSize: 11, color: "#3a3f4c" }}>STOP <span style={{ color: "#dc2626" }}>{e.stop}</span></span>}
+                </div>
+              )}
+
+              {type === "sellSideResearch" && (e.analyst || e.rating) && (
+                <div style={{ display: "flex", gap: 20, marginTop: 6, flexWrap: "wrap" as const }}>
+                  {e.analyst && <span style={{ fontSize: 11, color: "#3a3f4c" }}>ANALYST <span style={{ color: "#0d0f14" }}>{e.analyst}</span></span>}
+                  {e.rating && <span style={{ fontSize: 11, color: "#a07828" }}>RATING <span style={{ color: "#0d0f14" }}>{e.rating}</span></span>}
                 </div>
               )}
 
@@ -482,6 +502,21 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
           </>}
 
+          {type === "sellSideResearch" && <>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value.toUpperCase() }))} /></Field>
+              <Field label="Firm"><input style={iStyle} value={form.firm || ""} onChange={e => setForm(p => ({ ...p, firm: e.target.value }))} placeholder="Goldman, JPM, MS..." /></Field>
+              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Field label="Analyst"><input style={iStyle} value={form.analyst || ""} onChange={e => setForm(p => ({ ...p, analyst: e.target.value }))} /></Field>
+              <Field label="Rating"><input style={iStyle} value={form.rating || ""} onChange={e => setForm(p => ({ ...p, rating: e.target.value }))} placeholder="Buy, Hold, Overweight..." /></Field>
+            </div>
+            <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Initiation / update title" /></Field>
+            <Field label="Notes"><textarea style={taStyle} value={form.notes || ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Quick summary, key takeaways, PT changes..." /></Field>
+            <Field label="PDF Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="OneDrive, Dropbox, or direct PDF URL" /></Field>
+          </>}
+
           {(type === "macro" || type === "marketUpdates") && <>
             <div style={{ display: "flex", gap: 10 }}>
               <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
@@ -501,7 +536,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
 // ─── Root Component ───────────────────────────────────────────────────────────
 
-const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "JOURNAL", "TRADE IDEAS", "SECURITY THESIS", "MACRO", "MARKET UPDATES"];
+const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "JOURNAL", "TRADE IDEAS", "SECURITY THESIS", "SELL-SIDE PDFS", "MACRO", "MARKET UPDATES"];
 
 export default function ResearchDB() {
   const [tab, setTab] = useState(0);
@@ -569,8 +604,9 @@ export default function ResearchDB() {
         {tab === 3 && <JournalTab data={data as any} onChange={update as any} />}
         {tab === 4 && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
         {tab === 5 && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
-        {tab === 6 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
-        {tab === 7 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+        {tab === 6 && <ResearchTab items={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} type="sellSideResearch" />}
+        {tab === 7 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
+        {tab === 8 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
       </div>
     </div>
   );
