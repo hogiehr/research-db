@@ -37,6 +37,9 @@ export async function POST(request: Request) {
             "image/png",
             "image/jpeg",
             "image/webp",
+            "video/mp4",
+            "video/quicktime",
+            "video/webm",
           ],
         };
       },

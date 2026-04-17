@@ -181,7 +181,7 @@ function ComposerShell({
         </div>
         <button onClick={onSave} style={{ background: "#ff7a1a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>{saveLabel}</button>
       </div>
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "30px 28px 40px", display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 28, alignItems: "start" }}>
+      <div style={{ maxWidth: 1760, margin: "0 auto", padding: "30px 28px 40px", display: "grid", gridTemplateColumns: "300px minmax(0, 1fr)", gap: 36, alignItems: "start" }}>
         {children}
       </div>
     </div>
@@ -611,7 +611,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
           </div>
-          <div style={{ maxWidth: 980, width: "100%", margin: "0 auto" }}>
+          <div style={{ maxWidth: 1320, width: "100%", margin: "0 auto" }}>
             <input
               style={{ width: "100%", border: "none", background: "transparent", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, outline: "none", marginBottom: 10 }}
               value={form.title || ""}

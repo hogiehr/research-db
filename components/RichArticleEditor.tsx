@@ -33,6 +33,23 @@ async function uploadAsset(folder: string, file: File) {
   });
 }
 
+function getVideoEmbedHtml(url: string) {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(trimmed)) {
+    return `<figure style="margin:28px auto;text-align:center;"><video controls style="display:block;max-width:100%;margin:0 auto;border-radius:10px;border:1px solid #c4c7ce;"><source src="${trimmed}" /></video></figure><p></p>`;
+  }
+  const youtubeMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/i);
+  if (youtubeMatch) {
+    return `<figure style="margin:28px auto;text-align:center;"><iframe src="https://www.youtube.com/embed/${youtubeMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid #c4c7ce;border-radius:10px;" allowfullscreen></iframe></figure><p></p>`;
+  }
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/i);
+  if (vimeoMatch) {
+    return `<figure style="margin:28px auto;text-align:center;"><iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" style="width:100%;aspect-ratio:16/9;border:1px solid #c4c7ce;border-radius:10px;" allowfullscreen></iframe></figure><p></p>`;
+  }
+  return `<p><a href="${trimmed}" target="_blank" rel="noreferrer">${trimmed}</a></p>`;
+}
+
 export default function RichArticleEditor({ folder, onChange, placeholder = "Start writing...", value }: RichArticleEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -61,13 +78,17 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
   }
 
   async function insertFiles(files: FileList | File[]) {
-    const imageFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
-    if (!imageFiles.length) return;
+    const mediaFiles = Array.from(files).filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
+    if (!mediaFiles.length) return;
     setUploading(true);
     try {
-      for (const file of imageFiles) {
+      for (const file of mediaFiles) {
         const blob = await uploadAsset(folder, file);
-        insertHtml(`<figure style="margin:28px auto;text-align:center;"><img src="${blob.url}" alt="${file.name}" style="display:block;max-width:100%;margin:0 auto;border-radius:10px;border:1px solid #c4c7ce;" /></figure><p></p>`);
+        if (file.type.startsWith("video/")) {
+          insertHtml(`<figure style="margin:28px auto;text-align:center;"><video controls style="display:block;max-width:100%;margin:0 auto;border-radius:10px;border:1px solid #c4c7ce;"><source src="${blob.url}" type="${file.type}" /></video></figure><p></p>`);
+        } else {
+          insertHtml(`<figure style="margin:28px auto;text-align:center;"><img src="${blob.url}" alt="${file.name}" style="display:block;max-width:100%;margin:0 auto;border-radius:10px;border:1px solid #c4c7ce;" /></figure><p></p>`);
+        }
       }
     } finally {
       setUploading(false);
@@ -94,13 +115,18 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("italic")}><em>I</em></button>
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("formatBlock", "<h2>")}>H2</button>
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("formatBlock", "<blockquote>")}>Quote</button>
-        <button style={toolbarButtonStyle} type="button" onClick={() => exec("insertUnorderedList")}>• List</button>
+        <button style={toolbarButtonStyle} type="button" onClick={() => exec("insertUnorderedList")}>Bullets</button>
+        <button style={toolbarButtonStyle} type="button" onClick={() => exec("insertOrderedList")}>1. List</button>
         <button style={toolbarButtonStyle} type="button" onClick={() => {
           const url = window.prompt("Paste a link");
           if (url) exec("createLink", url);
         }}>Link</button>
-        <input accept="image/*" multiple onChange={e => { if (e.target.files) void insertFiles(e.target.files); }} ref={fileInputRef} style={{ display: "none" }} type="file" />
-        <button style={toolbarButtonStyle} type="button" onClick={() => fileInputRef.current?.click()}>{uploading ? "..." : "Image"}</button>
+        <button style={toolbarButtonStyle} type="button" onClick={() => {
+          const url = window.prompt("Paste a video URL");
+          if (url) insertHtml(getVideoEmbedHtml(url));
+        }}>Video</button>
+        <input accept="image/*,video/mp4,video/quicktime,video/webm" multiple onChange={e => { if (e.target.files) void insertFiles(e.target.files); }} ref={fileInputRef} style={{ display: "none" }} type="file" />
+        <button style={toolbarButtonStyle} type="button" onClick={() => fileInputRef.current?.click()}>{uploading ? "..." : "Media"}</button>
         <div style={{ marginLeft: "auto", color: "#5a6070", fontSize: 10, letterSpacing: 0.4 }}>
           Paste screenshots directly into the draft
         </div>
@@ -120,12 +146,12 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           borderRadius: 14,
           color: "#1b1b1b",
           fontFamily: "'Lora', serif",
-          fontSize: 18,
+          fontSize: 20,
           lineHeight: 1.9,
-          maxWidth: 860,
+          maxWidth: 1080,
           margin: "0 auto",
           outline: "none",
-          padding: "36px 44px",
+          padding: "44px 56px",
           whiteSpace: "pre-wrap",
           width: "100%",
         }}
@@ -142,17 +168,17 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           line-height: 1.25;
           margin: 28px 0 12px;
         }
-        [contenteditable] h1 { font-size: 34px; }
-        [contenteditable] h2 { font-size: 26px; }
-        [contenteditable] h3 { font-size: 20px; }
+        [contenteditable] h1 { font-size: 42px; }
+        [contenteditable] h2 { font-size: 30px; }
+        [contenteditable] h3 { font-size: 22px; }
         [contenteditable] blockquote {
           border-left: 3px solid #c9a84c;
           color: #4b5563;
           margin: 18px 0;
           padding-left: 16px;
         }
-        [contenteditable] ul {
-          padding-left: 26px;
+        [contenteditable] ul, [contenteditable] ol {
+          padding-left: 30px;
         }
         [contenteditable] p {
           margin: 0 0 16px;
@@ -161,9 +187,10 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           margin: 28px auto;
           text-align: center;
         }
-        [contenteditable] img {
+        [contenteditable] img, [contenteditable] video, [contenteditable] iframe {
           display: block;
           margin: 0 auto;
+          max-width: 100%;
         }
       `}</style>
     </div>
