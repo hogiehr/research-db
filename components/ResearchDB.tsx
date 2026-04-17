@@ -453,11 +453,12 @@ type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates" | "sellS
 function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const [viewing, setViewing] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
-    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
+    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", links: "" }
     : type === "tradeIdeas"
     ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
     : type === "sellSideResearch"
@@ -467,11 +468,12 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   const [form, setForm] = useState<Record<string, string>>(blank);
 
   function save() {
+    const nextForm = { ...form, date: form.date || new Date().toISOString().slice(0, 10) };
     if (editing !== null) {
-      onSave(items.map(x => x.id === editing ? { ...form, id: x.id } : x));
+      onSave(items.map(x => x.id === editing ? { ...nextForm, id: x.id } : x));
       setEditing(null);
     } else {
-      onSave([{ ...form, id: Date.now() }, ...items]);
+      onSave([{ ...nextForm, id: Date.now() }, ...items]);
     }
     setForm(blank);
     setOpen(false);
@@ -480,23 +482,29 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   function edit(id: number) {
     const item = items.find(x => x.id === id);
     if (!item) return;
-    setForm(item as Record<string, string>);
+    setForm({ ...blank, ...(item as Record<string, string>), date: String((item as Record<string, string>).date || new Date(item.id).toISOString().slice(0, 10)) });
     setEditing(id);
+    setViewing(null);
     setOpen(true);
   }
-  function remove(id: number) { onSave(items.filter(x => x.id !== id)); }
+  function remove(id: number) {
+    if (viewing === id) setViewing(null);
+    onSave(items.filter(x => x.id !== id));
+  }
+  function view(id: number) { setViewing(id); }
 
   const convColor: Record<string, string> = { High: "#16a34a", Medium: "#a07828", Low: "#dc2626" };
   const sortedItems = [...items].sort((a, b) => String((b as Record<string, string>).date || "").localeCompare(String((a as Record<string, string>).date || "")));
   const filteredItems = sortedItems.filter(item => {
     if (!query.trim()) return true;
     const e = item as Record<string, string>;
-    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.catalysts, e.risks, e.entry, e.target, e.stop]
+    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.entry, e.target, e.stop]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
     return haystack.includes(query.trim().toLowerCase());
   });
+  const viewingItem = viewing !== null ? items.find(x => x.id === viewing) : null;
 
   return (
     <div>
@@ -504,7 +512,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
         {useComposer ? (
           <input style={{ ...iStyle, maxWidth: 360 }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search entries..." />
         ) : <div />}
-        <button onClick={() => { setForm(blank); setEditing(null); setOpen(true); }}
+        <button onClick={() => { setForm(blank); setEditing(null); setViewing(null); setOpen(true); }}
           style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
           + NEW ENTRY
         </button>
@@ -517,10 +525,11 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filteredItems.map(item => {
           const e = item as Record<string, string>;
+          const displayDate = String(e.date || new Date(item.id).toISOString().slice(0, 10));
           return (
             <div key={item.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
+                <div onClick={() => useComposer && view(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, cursor: useComposer ? "pointer" : "default" }}>
                   {(type === "thesis" || type === "tradeIdeas" || type === "sellSideResearch") && e.ticker && (
                     <span style={{ fontSize: 15, color: "#0d0f14", fontWeight: 600 }}>{e.ticker}</span>
                   )}
@@ -534,23 +543,24 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                   {type === "sellSideResearch" && e.firm && (
                     <span style={{ fontSize: 10, color: "#2563eb", border: "1px solid #93c5fd80", borderRadius: 3, padding: "2px 7px" }}>{e.firm}</span>
                   )}
-                  {type === "sellSideResearch" && e.date && (
-                    <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
+                  {type === "sellSideResearch" && (
+                    <span style={{ fontSize: 11, color: "#4a5060" }}>{displayDate}</span>
                   )}
-                  {(type === "thesis" || type === "tradeIdeas") && e.date && (
-                    <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
+                  {(type === "thesis" || type === "tradeIdeas") && (
+                    <span style={{ fontSize: 11, color: "#4a5060" }}>{displayDate}</span>
                   )}
-                  {(type === "macro" || type === "marketUpdates") && e.date && (
-                    <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
+                  {(type === "macro" || type === "marketUpdates") && (
+                    <span style={{ fontSize: 11, color: "#4a5060" }}>{displayDate}</span>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
+                  {useComposer && <button onClick={() => view(item.id)} style={{ background: "none", border: "1px solid #c9c0b0", color: "#6b7280", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>VIEW</button>}
                   <button onClick={() => edit(item.id)} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
                   <button onClick={() => remove(item.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div>
               </div>
 
-              {(type === "macro" || type === "marketUpdates") && e.tags && (
+              {(type === "thesis" || type === "macro" || type === "marketUpdates") && e.tags && (
                 <div style={{ marginBottom: 8, display: "flex", flexWrap: "wrap" as const, gap: 4 }}>
                   {e.tags.split(",").map(t => t.trim()).filter(Boolean).map(t => (
                     <span key={t} style={{ fontSize: 10, color: "#a07828", background: "#a0782810", border: "1px solid #c9a84c25", borderRadius: 3, padding: "2px 7px" }}>{t}</span>
@@ -568,7 +578,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <p style={{ fontSize: 13, color: "#2a2f3c", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.notes}</p>
               )}
 
-              {type === "thesis" && (e.catalysts || e.risks) && (
+              {false && (
                 <div style={{ display: "flex", gap: 24, marginTop: 6 }}>
                   {e.catalysts && <div style={{ fontSize: 11, color: "#16a34a" }}>▲ {e.catalysts}</div>}
                   {e.risks && <div style={{ fontSize: 11, color: "#dc2626" }}>▼ {e.risks}</div>}
@@ -616,8 +626,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
-              <Field label="Catalysts"><textarea style={{ ...taStyle, height: 84 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
-              <Field label="Risks"><textarea style={{ ...taStyle, height: 84 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
+              <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="ai, earnings, semis" /></Field>
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
             {type === "tradeIdeas" && <>
@@ -654,6 +663,53 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               onChange={value => setForm(p => ({ ...p, [type === "thesis" ? "summary" : type === "tradeIdeas" ? "thesis" : "body"]: value }))}
               placeholder="Start writing..."
             />
+          </div>
+        </ComposerShell>
+      )}
+
+      {viewingItem && useComposer && (
+        <ComposerShell
+          onBack={() => setViewing(null)}
+          onSave={() => edit(viewingItem.id)}
+          saveLabel="EDIT ENTRY"
+          title="VIEW ENTRY"
+        >
+          <div style={{ background: "#efebe2", border: "1px solid #ddd6c7", borderRadius: 14, padding: 18, position: "sticky", top: 86 }}>
+            {type === "thesis" && <>
+              <Field label="Ticker"><div style={iStyle}>{String((viewingItem as Record<string, string>).ticker || "-")}</div></Field>
+              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
+              <Field label="Conviction"><div style={iStyle}>{String((viewingItem as Record<string, string>).conviction || "High")}</div></Field>
+              <Field label="Tags"><div style={{ ...iStyle, minHeight: 42 }}>{String((viewingItem as Record<string, string>).tags || "-")}</div></Field>
+              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
+            </>}
+            {type === "tradeIdeas" && <>
+              <Field label="Ticker"><div style={iStyle}>{String((viewingItem as Record<string, string>).ticker || "-")}</div></Field>
+              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
+              <Field label="Direction"><div style={iStyle}>{String((viewingItem as Record<string, string>).direction || "Long")}</div></Field>
+              <Field label="Term"><div style={iStyle}>{String((viewingItem as Record<string, string>).term || "ST")}</div></Field>
+              <Field label="Entry"><div style={iStyle}>{String((viewingItem as Record<string, string>).entry || "-")}</div></Field>
+              <Field label="Target"><div style={iStyle}>{String((viewingItem as Record<string, string>).target || "-")}</div></Field>
+              <Field label="Stop"><div style={iStyle}>{String((viewingItem as Record<string, string>).stop || "-")}</div></Field>
+              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
+            </>}
+            {(type === "macro" || type === "marketUpdates") && <>
+              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
+              <Field label="Tags"><div style={{ ...iStyle, minHeight: 42 }}>{String((viewingItem as Record<string, string>).tags || "-")}</div></Field>
+              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
+            </>}
+          </div>
+          <div style={{ width: "100%", margin: 0 }}>
+            <div style={{ width: "100%", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, marginBottom: 10 }}>
+              {String((viewingItem as Record<string, string>).title || "Untitled")}
+            </div>
+            <div style={{ color: "#7b8794", fontFamily: "'Lora', serif", fontSize: 22, lineHeight: 1.3, marginBottom: 24 }}>
+              {type === "tradeIdeas" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} - ${String((viewingItem as Record<string, string>).direction || "Long")} - ${String((viewingItem as Record<string, string>).term || "ST")} - ${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}`}
+              {type === "thesis" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} - ${String((viewingItem as Record<string, string>).conviction || "High")} conviction - ${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}${(viewingItem as Record<string, string>).tags ? ` - ${String((viewingItem as Record<string, string>).tags)}` : ""}`}
+              {(type === "macro" || type === "marketUpdates") && `${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}${(viewingItem as Record<string, string>).tags ? ` - ${String((viewingItem as Record<string, string>).tags)}` : ""}`}
+            </div>
+            <div style={{ background: "#fffdf8", border: "1px solid #ddd6c7", borderRadius: 18, padding: "44px 40px", minHeight: 520 }}>
+              <ArticleContent content={String(type === "thesis" ? (viewingItem as Record<string, string>).summary || "" : type === "tradeIdeas" ? (viewingItem as Record<string, string>).thesis || "" : (viewingItem as Record<string, string>).body || "")} />
+            </div>
           </div>
         </ComposerShell>
       )}
