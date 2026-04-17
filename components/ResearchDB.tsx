@@ -674,41 +674,60 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
           saveLabel="EDIT ENTRY"
           title="VIEW ENTRY"
         >
-          <div style={{ background: "#efebe2", border: "1px solid #ddd6c7", borderRadius: 14, padding: 18, position: "sticky", top: 86 }}>
-            {type === "thesis" && <>
-              <Field label="Ticker"><div style={iStyle}>{String((viewingItem as Record<string, string>).ticker || "-")}</div></Field>
-              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
-              <Field label="Conviction"><div style={iStyle}>{String((viewingItem as Record<string, string>).conviction || "High")}</div></Field>
-              <Field label="Tags"><div style={{ ...iStyle, minHeight: 42 }}>{String((viewingItem as Record<string, string>).tags || "-")}</div></Field>
-              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
-            </>}
-            {type === "tradeIdeas" && <>
-              <Field label="Ticker"><div style={iStyle}>{String((viewingItem as Record<string, string>).ticker || "-")}</div></Field>
-              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
-              <Field label="Direction"><div style={iStyle}>{String((viewingItem as Record<string, string>).direction || "Long")}</div></Field>
-              <Field label="Term"><div style={iStyle}>{String((viewingItem as Record<string, string>).term || "ST")}</div></Field>
-              <Field label="Entry"><div style={iStyle}>{String((viewingItem as Record<string, string>).entry || "-")}</div></Field>
-              <Field label="Target"><div style={iStyle}>{String((viewingItem as Record<string, string>).target || "-")}</div></Field>
-              <Field label="Stop"><div style={iStyle}>{String((viewingItem as Record<string, string>).stop || "-")}</div></Field>
-              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
-            </>}
-            {(type === "macro" || type === "marketUpdates") && <>
-              <Field label="Date"><div style={iStyle}>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</div></Field>
-              <Field label="Tags"><div style={{ ...iStyle, minHeight: 42 }}>{String((viewingItem as Record<string, string>).tags || "-")}</div></Field>
-              <Field label="Links"><div style={{ ...iStyle, minHeight: 84, whiteSpace: "pre-wrap" }}>{String((viewingItem as Record<string, string>).links || "-")}</div></Field>
-            </>}
-          </div>
-          <div style={{ width: "100%", margin: 0 }}>
-            <div style={{ width: "100%", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, marginBottom: 10 }}>
-              {String((viewingItem as Record<string, string>).title || "Untitled")}
-            </div>
-            <div style={{ color: "#7b8794", fontFamily: "'Lora', serif", fontSize: 22, lineHeight: 1.3, marginBottom: 24 }}>
-              {type === "tradeIdeas" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} - ${String((viewingItem as Record<string, string>).direction || "Long")} - ${String((viewingItem as Record<string, string>).term || "ST")} - ${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}`}
-              {type === "thesis" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} - ${String((viewingItem as Record<string, string>).conviction || "High")} conviction - ${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}${(viewingItem as Record<string, string>).tags ? ` - ${String((viewingItem as Record<string, string>).tags)}` : ""}`}
-              {(type === "macro" || type === "marketUpdates") && `${String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}${(viewingItem as Record<string, string>).tags ? ` - ${String((viewingItem as Record<string, string>).tags)}` : ""}`}
-            </div>
-            <div style={{ background: "#fffdf8", border: "1px solid #ddd6c7", borderRadius: 18, padding: "44px 40px", minHeight: 520 }}>
-              <ArticleContent content={String(type === "thesis" ? (viewingItem as Record<string, string>).summary || "" : type === "tradeIdeas" ? (viewingItem as Record<string, string>).thesis || "" : (viewingItem as Record<string, string>).body || "")} />
+          <div />
+          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%", maxWidth: 760, margin: "0 auto", padding: "18px 0 64px" }}>
+              <div style={{ fontSize: 12, color: "#a07828", letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 18 }}>
+                {type === "thesis" ? "Security Thesis" : type === "tradeIdeas" ? "Trade Idea" : type === "macro" ? "Macro" : "Market Update"}
+              </div>
+
+              <div style={{ color: "#2f4368", fontFamily: "'Lora', serif", fontSize: 50, lineHeight: 1.08, marginBottom: 14 }}>
+                {String((viewingItem as Record<string, string>).title || "Untitled")}
+              </div>
+
+              <div style={{ color: "#6f7b88", fontFamily: "'Lora', serif", fontSize: 21, lineHeight: 1.45, marginBottom: 20 }}>
+                {type === "tradeIdeas" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} · ${String((viewingItem as Record<string, string>).direction || "Long")} · ${String((viewingItem as Record<string, string>).term || "ST")}`}
+                {type === "thesis" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} · ${String((viewingItem as Record<string, string>).conviction || "High")} conviction`}
+                {(type === "macro" || type === "marketUpdates") && `${String((viewingItem as Record<string, string>).tags || "Internal note")}`}
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", color: "#7f8896", fontSize: 12, marginBottom: 26, paddingBottom: 18, borderBottom: "1px solid #e3dbce" }}>
+                <span>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</span>
+                {(viewingItem as Record<string, string>).tags && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#efe6d7", color: "#8d6721" }}>
+                    {String((viewingItem as Record<string, string>).tags)}
+                  </span>
+                )}
+                {type === "tradeIdeas" && (viewingItem as Record<string, string>).entry && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#edf1f6", color: "#506070" }}>
+                    Entry: {String((viewingItem as Record<string, string>).entry)}
+                  </span>
+                )}
+                {type === "tradeIdeas" && (viewingItem as Record<string, string>).target && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#e7f5ea", color: "#1f7a37" }}>
+                    Target: {String((viewingItem as Record<string, string>).target)}
+                  </span>
+                )}
+                {type === "tradeIdeas" && (viewingItem as Record<string, string>).stop && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#f9e7e7", color: "#b23a3a" }}>
+                    Stop: {String((viewingItem as Record<string, string>).stop)}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ background: "transparent", border: "none", padding: 0, minHeight: 520 }}>
+                <ArticleContent content={String(type === "thesis" ? (viewingItem as Record<string, string>).summary || "" : type === "tradeIdeas" ? (viewingItem as Record<string, string>).thesis || "" : (viewingItem as Record<string, string>).body || "")} />
+              </div>
+
+              {!!(viewingItem as Record<string, string>).links && (
+                <div style={{ marginTop: 34, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {String((viewingItem as Record<string, string>).links || "").split("\n").filter(Boolean).map((l, j) => (
+                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ color: "#9a6d18", fontSize: 13, textDecoration: "none" }}>
+                      {l}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </ComposerShell>
