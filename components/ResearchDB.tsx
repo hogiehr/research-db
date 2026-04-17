@@ -181,7 +181,7 @@ function ComposerShell({
         </div>
         <button onClick={onSave} style={{ background: "#ff7a1a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>{saveLabel}</button>
       </div>
-      <div style={{ maxWidth: 1760, margin: "0 auto", padding: "30px 28px 40px", display: "grid", gridTemplateColumns: "300px minmax(0, 1fr)", gap: 36, alignItems: "start" }}>
+      <div style={{ width: "100%", margin: 0, padding: "24px 18px 40px", display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 28, alignItems: "start" }}>
         {children}
       </div>
     </div>
@@ -453,12 +453,13 @@ type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates" | "sellS
 function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
   const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
-    ? { ticker: "", title: "", conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
+    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", catalysts: "", risks: "", links: "" }
     : type === "tradeIdeas"
-    ? { ticker: "", direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
+    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
     : type === "sellSideResearch"
     ? { ticker: "", firm: "", analyst: "", title: "", date: new Date().toISOString().slice(0, 10), rating: "", notes: "", links: "" }
     : { title: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "" };
@@ -467,7 +468,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
   function save() {
     if (editing !== null) {
-      onSave(items.map((x, i) => i === editing ? { ...form, id: x.id } : x));
+      onSave(items.map(x => x.id === editing ? { ...form, id: x.id } : x));
       setEditing(null);
     } else {
       onSave([{ ...form, id: Date.now() }, ...items]);
@@ -476,26 +477,45 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
     setOpen(false);
   }
 
-  function edit(i: number) { setForm(items[i] as Record<string, string>); setEditing(i); setOpen(true); }
-  function remove(i: number) { onSave(items.filter((_, j) => j !== i)); }
+  function edit(id: number) {
+    const item = items.find(x => x.id === id);
+    if (!item) return;
+    setForm(item as Record<string, string>);
+    setEditing(id);
+    setOpen(true);
+  }
+  function remove(id: number) { onSave(items.filter(x => x.id !== id)); }
 
   const convColor: Record<string, string> = { High: "#16a34a", Medium: "#a07828", Low: "#dc2626" };
+  const sortedItems = [...items].sort((a, b) => String((b as Record<string, string>).date || "").localeCompare(String((a as Record<string, string>).date || "")));
+  const filteredItems = sortedItems.filter(item => {
+    if (!query.trim()) return true;
+    const e = item as Record<string, string>;
+    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.catalysts, e.risks, e.entry, e.target, e.stop]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query.trim().toLowerCase());
+  });
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16 }}>
+        {useComposer ? (
+          <input style={{ ...iStyle, maxWidth: 360 }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search entries..." />
+        ) : <div />}
         <button onClick={() => { setForm(blank); setEditing(null); setOpen(true); }}
           style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
           + NEW ENTRY
         </button>
       </div>
 
-      {items.length === 0 && (
+      {filteredItems.length === 0 && (
         <div style={{ textAlign: "center", padding: 80, color: "#b0b3bc", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES</div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {items.map((item, i) => {
+        {filteredItems.map(item => {
           const e = item as Record<string, string>;
           return (
             <div key={item.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
@@ -517,13 +537,16 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                   {type === "sellSideResearch" && e.date && (
                     <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
                   )}
+                  {(type === "thesis" || type === "tradeIdeas") && e.date && (
+                    <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
+                  )}
                   {(type === "macro" || type === "marketUpdates") && e.date && (
                     <span style={{ fontSize: 11, color: "#4a5060" }}>{e.date}</span>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
-                  <button onClick={() => edit(i)} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
-                  <button onClick={() => remove(i)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
+                  <button onClick={() => edit(item.id)} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
+                  <button onClick={() => remove(item.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div>
               </div>
 
@@ -591,6 +614,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
           <div style={{ background: "#efebe2", border: "1px solid #ddd6c7", borderRadius: 14, padding: 18, position: "sticky", top: 86 }}>
             {type === "thesis" && <>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
               <Field label="Catalysts"><textarea style={{ ...taStyle, height: 84 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
               <Field label="Risks"><textarea style={{ ...taStyle, height: 84 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
@@ -598,6 +622,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             </>}
             {type === "tradeIdeas" && <>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
+              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
               <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
               <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
               <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
@@ -611,7 +636,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
           </div>
-          <div style={{ maxWidth: 1320, width: "100%", margin: "0 auto" }}>
+          <div style={{ width: "100%", margin: 0 }}>
             <input
               style={{ width: "100%", border: "none", background: "transparent", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, outline: "none", marginBottom: 10 }}
               value={form.title || ""}

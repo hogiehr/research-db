@@ -148,10 +148,10 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           fontFamily: "'Lora', serif",
           fontSize: 20,
           lineHeight: 1.9,
-          maxWidth: 1080,
-          margin: "0 auto",
+          maxWidth: "none",
+          margin: 0,
           outline: "none",
-          padding: "44px 56px",
+          padding: "44px 40px",
           whiteSpace: "pre-wrap",
           width: "100%",
         }}
