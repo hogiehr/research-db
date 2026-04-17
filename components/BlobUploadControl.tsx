@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 
 type BlobUploadControlProps = {
   accept?: string;
@@ -22,6 +23,10 @@ const buttonStyle: React.CSSProperties = {
   letterSpacing: 1,
   padding: "7px 12px",
 };
+
+function sanitizeFilename(value: string) {
+  return value.replace(/[^A-Za-z0-9._-]+/g, "-");
+}
 
 export default function BlobUploadControl({
   accept = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp",
@@ -45,23 +50,12 @@ export default function BlobUploadControl({
       const uploadedUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("folder", folder);
-
-        const response = await fetch("/api/uploads", {
-          method: "POST",
-          body: formData,
+        const pathname = `${folder}/${sanitizeFilename(file.name || "upload")}`;
+        const blob = await upload(pathname, file, {
+          access: "public",
+          handleUploadUrl: "/api/uploads",
         });
-
-        if (!response.ok) {
-          const payload = await response.json().catch(() => null);
-          throw new Error(payload?.error || "Upload failed");
-        }
-
-        const payload = await response.json();
-        if (typeof payload?.url !== "string") throw new Error("Upload failed");
-        uploadedUrls.push(payload.url);
+        uploadedUrls.push(blob.url);
       }
 
       if (multiple) {

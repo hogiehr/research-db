@@ -1,42 +1,52 @@
-import { del, list, put } from "@vercel/blob";
+import { del, list } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
 function sanitizeSegment(value: string, fallback: string) {
   const cleaned = value
     .toLowerCase()
-    .replace(/[^a-z0-9/_-]+/g, "-")
+    .replace(/[^a-z0-9/._-]+/g, "-")
     .replace(/\/+/g, "/")
     .replace(/^\/|\/$/g, "");
   return cleaned || fallback;
 }
 
-function sanitizeFilename(value: string) {
-  return value.replace(/[^A-Za-z0-9._-]+/g, "-");
-}
-
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const folderValue = formData.get("folder");
+    const body = (await request.json()) as HandleUploadBody;
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async pathname => {
+        const cleanedPath = sanitizeSegment(pathname, "uploads");
+        if (!cleanedPath) {
+          throw new Error("Invalid upload path");
+        }
 
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-    }
-
-    const folder = sanitizeSegment(typeof folderValue === "string" ? folderValue : "uploads", "uploads");
-    const filename = sanitizeFilename(file.name || "upload");
-    const pathname = `${folder}/${filename}`;
-
-    const blob = await put(pathname, file, {
-      access: "public",
-      addRandomSuffix: true,
+        return {
+          addRandomSuffix: true,
+          allowedContentTypes: [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/plain",
+            "image/png",
+            "image/jpeg",
+            "image/webp",
+          ],
+        };
+      },
+      onUploadCompleted: async () => {},
     });
 
-    return NextResponse.json({ url: blob.url, pathname: blob.pathname });
+    return NextResponse.json(jsonResponse);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
