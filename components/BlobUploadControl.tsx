@@ -7,6 +7,7 @@ type BlobUploadControlProps = {
   buttonLabel?: string;
   folder: string;
   multiple?: boolean;
+  onUploaded?: (urls: string[]) => void;
   onChange: (value: string) => void;
   value: string;
 };
@@ -27,6 +28,7 @@ export default function BlobUploadControl({
   buttonLabel = "UPLOAD FILE",
   folder,
   multiple = false,
+  onUploaded,
   onChange,
   value,
 }: BlobUploadControlProps) {
@@ -71,6 +73,8 @@ export default function BlobUploadControl({
       } else if (uploadedUrls[0]) {
         onChange(uploadedUrls[0]);
       }
+
+      onUploaded?.(uploadedUrls);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {

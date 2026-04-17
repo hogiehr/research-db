@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 function sanitizeSegment(value: string, fallback: string) {
@@ -36,6 +36,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: blob.url, pathname: blob.pathname });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const prefixValue = searchParams.get("prefix") || "";
+    const prefix = sanitizeSegment(prefixValue, "");
+    const { blobs } = await list(prefix ? { prefix: `${prefix}/` } : undefined);
+    return NextResponse.json({ blobs });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to list uploads";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const url = searchParams.get("url");
+    if (!url) {
+      return NextResponse.json({ error: "Missing file url" }, { status: 400 });
+    }
+
+    await del(url);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Delete failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

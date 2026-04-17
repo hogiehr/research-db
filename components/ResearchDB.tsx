@@ -555,6 +555,148 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
 // ─── Root Component ───────────────────────────────────────────────────────────
 
+type SellSideFolder = ResearchEntry & { name?: string; createdAt?: string };
+type BlobListItem = { url: string; pathname: string; size: number; uploadedAt?: string };
+
+function fmtFileSize(bytes: number) {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  return `${size.toFixed(size >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+function folderSlug(name: string) {
+  return name.trim().replace(/\s+/g, "-");
+}
+
+function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void }) {
+  const items = (folders as SellSideFolder[]).filter(folder => folder.name);
+  const [selectedId, setSelectedId] = useState<number | null>(items[0]?.id ?? null);
+  const [newFolder, setNewFolder] = useState("");
+  const [files, setFiles] = useState<BlobListItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedId && !items.some(folder => folder.id === selectedId)) setSelectedId(items[0]?.id ?? null);
+    if (!selectedId && items[0]?.id) setSelectedId(items[0].id);
+  }, [items, selectedId]);
+
+  const selectedFolder = items.find(folder => folder.id === selectedId) ?? null;
+  const selectedPrefix = selectedFolder ? `research/sell-side-pdfs/${folderSlug(selectedFolder.name || "")}` : "";
+
+  async function loadFiles(prefix: string) {
+    if (!prefix) { setFiles([]); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/uploads?prefix=${encodeURIComponent(prefix)}`);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error || "Unable to load files");
+      setFiles(payload.blobs ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load files");
+      setFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadFiles(selectedPrefix);
+  }, [selectedPrefix]);
+
+  function createFolder() {
+    const name = newFolder.trim();
+    if (!name) return;
+    const entry = { id: Date.now(), name, createdAt: new Date().toISOString() };
+    onSave([entry, ...items]);
+    setNewFolder("");
+    setSelectedId(entry.id);
+  }
+
+  function deleteFolder(id: number) {
+    const remaining = items.filter(folder => folder.id !== id);
+    onSave(remaining);
+    if (selectedId === id) setSelectedId(remaining[0]?.id ?? null);
+  }
+
+  async function deleteFile(url: string) {
+    setDeletingUrl(url);
+    setError(null);
+    try {
+      const response = await fetch(`/api/uploads?url=${encodeURIComponent(url)}`, { method: "DELETE" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || "Delete failed");
+      await loadFiles(selectedPrefix);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeletingUrl(null);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20, alignItems: "start" }}>
+      <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: 16 }}>
+        <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 12 }}>FOLDERS</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <input style={iStyle} value={newFolder} onChange={e => setNewFolder(e.target.value)} placeholder="2026-04-17 or Semis Week" />
+          <button onClick={createFolder} style={{ background: "#a07828", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "0 12px", fontSize: 10, letterSpacing: 1, cursor: "pointer" }}>NEW</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {items.length === 0 && <div style={{ color: "#5a6070", fontSize: 11 }}>Create a folder to start organizing PDFs.</div>}
+          {items.map(folder => (
+            <div key={folder.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button onClick={() => setSelectedId(folder.id)} style={{ flex: 1, textAlign: "left", background: selectedId === folder.id ? "#e2e4e8" : "transparent", border: "1px solid #1e2128", color: selectedId === folder.id ? "#0d0f14" : "#3a3f4c", borderRadius: 6, padding: "10px 12px", cursor: "pointer", fontSize: 11 }}>{folder.name}</button>
+              <button onClick={() => deleteFolder(folder.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: 20 }}>
+        {!selectedFolder && <div style={{ color: "#5a6070", fontSize: 12 }}>Pick or create a folder, then upload PDFs into it.</div>}
+        {selectedFolder && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", marginBottom: 18 }}>
+              <div>
+                <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 4 }}>SELL-SIDE PDFS</div>
+                <div style={{ fontSize: 18, color: "#0d0f14" }}>{selectedFolder.name}</div>
+              </div>
+              <BlobUploadControl accept=".pdf,application/pdf" buttonLabel="UPLOAD PDFS" folder={selectedPrefix} multiple onChange={() => {}} onUploaded={() => void loadFiles(selectedPrefix)} value="" />
+            </div>
+            {error && <div style={{ color: "#dc2626", fontSize: 11, marginBottom: 12 }}>{error}</div>}
+            {loading && <div style={{ color: "#5a6070", fontSize: 11, marginBottom: 12 }}>Loading files...</div>}
+            {!loading && files.length === 0 && <div style={{ color: "#5a6070", fontSize: 12 }}>No PDFs in this folder yet.</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {files.map(file => {
+                const name = file.pathname.split("/").pop() || file.pathname;
+                return (
+                  <div key={file.url} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid #1e2128", borderRadius: 8, background: "#e2e4e8" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <a href={file.url} target="_blank" rel="noreferrer" style={{ color: "#0d0f14", textDecoration: "none", fontSize: 12, fontWeight: 600 }}>{name}</a>
+                      <div style={{ color: "#5a6070", fontSize: 10, marginTop: 4 }}>{fmtFileSize(file.size)}{file.uploadedAt ? ` · ${new Date(file.uploadedAt).toLocaleString()}` : ""}</div>
+                    </div>
+                    <a href={file.url} target="_blank" rel="noreferrer" style={{ color: "#a07828", textDecoration: "none", fontSize: 10, letterSpacing: 1 }}>OPEN</a>
+                    <button onClick={() => void deleteFile(file.url)} disabled={deletingUrl === file.url} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 10, letterSpacing: 1, opacity: deletingUrl === file.url ? 0.5 : 1 }}>{deletingUrl === file.url ? "DELETING" : "DELETE"}</button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "JOURNAL", "TRADE IDEAS", "SECURITY THESIS", "SELL-SIDE PDFS", "MACRO", "MARKET UPDATES"];
 
 export default function ResearchDB() {
@@ -623,7 +765,7 @@ export default function ResearchDB() {
         {tab === 3 && <JournalTab data={data as any} onChange={update as any} />}
         {tab === 4 && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
         {tab === 5 && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
-        {tab === 6 && <ResearchTab items={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} type="sellSideResearch" />}
+        {tab === 6 && <SellSideFilesTab folders={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} />}
         {tab === 7 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
         {tab === 8 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
       </div>
