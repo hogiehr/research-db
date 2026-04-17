@@ -635,40 +635,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
       {open && !useComposer && (
         <Modal title={editing !== null ? "Edit Entry" : "New Entry"} onClose={() => { setOpen(false); setEditing(null); }}>
-          {type === "thesis" && <>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
-              <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
-            </div>
-            <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
-            <MarkdownEditor label="Write-Up" value={form.summary || ""} onChange={value => setForm(p => ({ ...p, summary: value }))} folder="research/security-thesis-images" placeholder="Write like an internal Substack: headings, bullets, quotes, and inline images..." height={260} />
-            <Field label="Catalysts"><textarea style={{ ...taStyle, height: 60 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
-            <Field label="Risks"><textarea style={{ ...taStyle, height: 60 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
-            <Field label="Links (one per line)">
-              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
-              <BlobUploadControl folder="research/security-thesis" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
-            </Field>
-          </>}
-
-          {type === "tradeIdeas" && <>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
-              <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
-              <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
-            </div>
-            <MarkdownEditor label="Write-Up" value={form.thesis || ""} onChange={value => setForm(p => ({ ...p, thesis: value }))} folder="research/trade-ideas-images" placeholder="Build the idea with sections, charts, screenshots, and supporting visuals inline..." height={260} />
-            <div style={{ display: "flex", gap: 10 }}>
-              <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
-              <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
-              <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
-            </div>
-            <Field label="Links (one per line)">
-              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
-              <BlobUploadControl folder="research/trade-ideas" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
-            </Field>
-          </>}
-
-          {type === "sellSideResearch" && <>
+          <>
             <div style={{ display: "flex", gap: 10 }}>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value.toUpperCase() }))} /></Field>
               <Field label="Firm"><input style={iStyle} value={form.firm || ""} onChange={e => setForm(p => ({ ...p, firm: e.target.value }))} placeholder="Goldman, JPM, MS..." /></Field>
@@ -683,19 +650,6 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             <Field label="PDF Links (one per line)">
               <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="PDF URL auto-fills after upload" />
               <BlobUploadControl accept=".pdf,application/pdf" buttonLabel="UPLOAD PDF" folder="research/sell-side-pdfs" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
-            </Field>
-          </>}
-
-          {(type === "macro" || type === "marketUpdates") && <>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
-              <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
-            </div>
-            <Field label="Tags (comma separated)"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
-            <MarkdownEditor label="Body" value={form.body || ""} onChange={value => setForm(p => ({ ...p, body: value }))} folder={`research/${type}-images`} placeholder="Write the full internal note here with inline screenshots or charts..." height={280} />
-            <Field label="Links (one per line)">
-              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
-              <BlobUploadControl folder={`research/${type}`} multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
             </Field>
           </>}
 
