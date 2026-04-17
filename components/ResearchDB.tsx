@@ -651,7 +651,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="PDF URL auto-fills after upload" />
               <BlobUploadControl accept=".pdf,application/pdf" buttonLabel="UPLOAD PDF" folder="research/sell-side-pdfs" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
             </Field>
-          </>}
+          </>
 
           <SaveBtn onClick={save} />
         </Modal>
