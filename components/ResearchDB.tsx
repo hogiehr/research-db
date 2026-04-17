@@ -611,7 +611,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
           </div>
-          <div>
+          <div style={{ maxWidth: 980, width: "100%", margin: "0 auto" }}>
             <input
               style={{ width: "100%", border: "none", background: "transparent", color: "#3a4b68", fontFamily: "'Lora', serif", fontSize: 42, lineHeight: 1.15, outline: "none", marginBottom: 10 }}
               value={form.title || ""}

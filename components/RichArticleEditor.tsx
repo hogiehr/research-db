@@ -67,7 +67,7 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
     try {
       for (const file of imageFiles) {
         const blob = await uploadAsset(folder, file);
-        insertHtml(`<figure style="margin:24px 0;"><img src="${blob.url}" alt="${file.name}" style="max-width:100%;border-radius:10px;border:1px solid #c4c7ce;" /></figure><p></p>`);
+        insertHtml(`<figure style="margin:28px auto;text-align:center;"><img src="${blob.url}" alt="${file.name}" style="display:block;max-width:100%;margin:0 auto;border-radius:10px;border:1px solid #c4c7ce;" /></figure><p></p>`);
       }
     } finally {
       setUploading(false);
@@ -122,9 +122,12 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           fontFamily: "'Lora', serif",
           fontSize: 18,
           lineHeight: 1.9,
+          maxWidth: 860,
+          margin: "0 auto",
           outline: "none",
           padding: "36px 44px",
           whiteSpace: "pre-wrap",
+          width: "100%",
         }}
         suppressContentEditableWarning
       />
@@ -153,6 +156,14 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
         }
         [contenteditable] p {
           margin: 0 0 16px;
+        }
+        [contenteditable] figure {
+          margin: 28px auto;
+          text-align: center;
+        }
+        [contenteditable] img {
+          display: block;
+          margin: 0 auto;
         }
       `}</style>
     </div>
