@@ -5,6 +5,7 @@ import BlotterTab from "./BlotterTab";
 import AnalyticsTab from "./AnalyticsTab";
 import JournalTab from "./JournalTab";
 import BlobUploadControl from "./BlobUploadControl";
+import MarkdownArticle from "./MarkdownArticle";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,57 @@ function SaveBtn({ onClick, label = "SAVE" }: { onClick: () => void; label?: str
     <button onClick={onClick} style={{ background: "#a07828", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>
       {label}
     </button>
+  );
+}
+
+function appendMarkdownImages(current: string, urls: string[]) {
+  const imageBlock = urls.map(url => `![](${url})`).join("\n\n");
+  if (!imageBlock) return current;
+  return current.trim() ? `${current.trim()}\n\n${imageBlock}` : imageBlock;
+}
+
+function MarkdownEditor({
+  label,
+  value,
+  onChange,
+  folder,
+  placeholder,
+  height = 220,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  folder: string;
+  placeholder?: string;
+  height?: number;
+}) {
+  return (
+    <Field label={label}>
+      <textarea
+        style={{ ...taStyle, height, lineHeight: 1.75, fontFamily: "'Lora', serif", fontSize: 14 }}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+      <BlobUploadControl
+        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+        buttonLabel="UPLOAD IMAGE"
+        folder={folder}
+        multiple
+        onChange={() => {}}
+        onUploaded={urls => onChange(appendMarkdownImages(value, urls))}
+        value=""
+      />
+      <div style={{ fontSize: 10, color: "#5a6070", marginTop: 8, letterSpacing: 0.4 }}>
+        Supports headings with `#`, bullets with `-`, quotes with `&gt;`, links, and inline images.
+      </div>
+      {value.trim() && (
+        <div style={{ marginTop: 14, background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: 16 }}>
+          <div style={{ fontSize: 10, color: "#4a5060", letterSpacing: 1.5, marginBottom: 10 }}>PREVIEW</div>
+          <MarkdownArticle content={value} />
+        </div>
+      )}
+    </Field>
   );
 }
 
@@ -437,7 +489,9 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               )}
 
               {(e.summary || e.thesis || e.body) && (
-                <p style={{ fontSize: 13, color: "#2a2f3c", lineHeight: 1.65, fontFamily: "'Lora', serif", marginBottom: 8 }}>{e.summary || e.thesis || e.body}</p>
+                <div style={{ marginBottom: 8 }}>
+                  <MarkdownArticle content={String(e.summary || e.thesis || e.body)} />
+                </div>
               )}
 
               {type === "sellSideResearch" && e.notes && (
@@ -488,7 +542,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
             </div>
             <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></Field>
-            <Field label="Summary"><textarea style={taStyle} value={form.summary || ""} onChange={e => setForm(p => ({ ...p, summary: e.target.value }))} /></Field>
+            <MarkdownEditor label="Write-Up" value={form.summary || ""} onChange={value => setForm(p => ({ ...p, summary: value }))} folder="research/security-thesis-images" placeholder="Write like an internal Substack: headings, bullets, quotes, and inline images..." height={260} />
             <Field label="Catalysts"><textarea style={{ ...taStyle, height: 60 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
             <Field label="Risks"><textarea style={{ ...taStyle, height: 60 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
             <Field label="Links (one per line)">
@@ -503,7 +557,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
               <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
             </div>
-            <Field label="Thesis"><textarea style={taStyle} value={form.thesis || ""} onChange={e => setForm(p => ({ ...p, thesis: e.target.value }))} /></Field>
+            <MarkdownEditor label="Write-Up" value={form.thesis || ""} onChange={value => setForm(p => ({ ...p, thesis: value }))} folder="research/trade-ideas-images" placeholder="Build the idea with sections, charts, screenshots, and supporting visuals inline..." height={260} />
             <div style={{ display: "flex", gap: 10 }}>
               <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
               <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
@@ -539,7 +593,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
             </div>
             <Field label="Tags (comma separated)"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
-            <Field label="Body"><textarea style={{ ...taStyle, height: 140 }} value={form.body || ""} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} /></Field>
+            <MarkdownEditor label="Body" value={form.body || ""} onChange={value => setForm(p => ({ ...p, body: value }))} folder={`research/${type}-images`} placeholder="Write the full internal note here with inline screenshots or charts..." height={280} />
             <Field label="Links (one per line)">
               <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
               <BlobUploadControl folder={`research/${type}`} multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
