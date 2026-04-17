@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import BlotterTab from "./BlotterTab";
 import AnalyticsTab from "./AnalyticsTab";
 import JournalTab from "./JournalTab";
+import BlobUploadControl from "./BlobUploadControl";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -313,7 +314,10 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
             <Field label="Term"><select style={selStyle} value={eqF.term} onChange={e => setEqF(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
             <Field label="L/S"><select style={selStyle} value={eqF.ls} onChange={e => setEqF(p => ({ ...p, ls: e.target.value }))}><option>L</option><option>S</option></select></Field>
           </div>
-          <Field label="Thesis Link (OneDrive URL)"><input style={iStyle} value={eqF.thesis} onChange={e => setEqF(p => ({ ...p, thesis: e.target.value }))} placeholder="https://..." /></Field>
+          <Field label="Thesis Attachment">
+            <input style={iStyle} value={eqF.thesis} onChange={e => setEqF(p => ({ ...p, thesis: e.target.value }))} placeholder="URL auto-fills after upload" />
+            <BlobUploadControl folder="positions/equity-thesis" onChange={value => setEqF(p => ({ ...p, thesis: value }))} value={eqF.thesis} />
+          </Field>
           <SaveBtn onClick={saveEq} label="ADD POSITION" />
         </Modal>
       )}
@@ -333,7 +337,10 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
             <Field label="Fill (per share)"><input style={iStyle} type="number" value={optF.fill} onChange={e => setOptF(p => ({ ...p, fill: e.target.value }))} /></Field>
             <Field label="Contracts"><input style={iStyle} type="number" value={optF.units} onChange={e => setOptF(p => ({ ...p, units: e.target.value }))} /></Field>
           </div>
-          <Field label="Thesis Link (OneDrive URL)"><input style={iStyle} value={optF.thesis} onChange={e => setOptF(p => ({ ...p, thesis: e.target.value }))} placeholder="https://..." /></Field>
+          <Field label="Thesis Attachment">
+            <input style={iStyle} value={optF.thesis} onChange={e => setOptF(p => ({ ...p, thesis: e.target.value }))} placeholder="URL auto-fills after upload" />
+            <BlobUploadControl folder="positions/options-thesis" onChange={value => setOptF(p => ({ ...p, thesis: value }))} value={optF.thesis} />
+          </Field>
           <SaveBtn onClick={saveOpt} label="ADD POSITION" />
         </Modal>
       )}
@@ -484,7 +491,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             <Field label="Summary"><textarea style={taStyle} value={form.summary || ""} onChange={e => setForm(p => ({ ...p, summary: e.target.value }))} /></Field>
             <Field label="Catalysts"><textarea style={{ ...taStyle, height: 60 }} value={form.catalysts || ""} onChange={e => setForm(p => ({ ...p, catalysts: e.target.value }))} /></Field>
             <Field label="Risks"><textarea style={{ ...taStyle, height: 60 }} value={form.risks || ""} onChange={e => setForm(p => ({ ...p, risks: e.target.value }))} /></Field>
-            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            <Field label="Links (one per line)">
+              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
+              <BlobUploadControl folder="research/security-thesis" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+            </Field>
           </>}
 
           {type === "tradeIdeas" && <>
@@ -499,7 +509,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
               <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
             </div>
-            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            <Field label="Links (one per line)">
+              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
+              <BlobUploadControl folder="research/trade-ideas" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+            </Field>
           </>}
 
           {type === "sellSideResearch" && <>
@@ -514,7 +527,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             </div>
             <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Initiation / update title" /></Field>
             <Field label="Notes"><textarea style={taStyle} value={form.notes || ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Quick summary, key takeaways, PT changes..." /></Field>
-            <Field label="PDF Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="OneDrive, Dropbox, or direct PDF URL" /></Field>
+            <Field label="PDF Links (one per line)">
+              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="PDF URL auto-fills after upload" />
+              <BlobUploadControl accept=".pdf,application/pdf" buttonLabel="UPLOAD PDF" folder="research/sell-side-pdfs" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+            </Field>
           </>}
 
           {(type === "macro" || type === "marketUpdates") && <>
@@ -524,7 +540,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             </div>
             <Field label="Tags (comma separated)"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
             <Field label="Body"><textarea style={{ ...taStyle, height: 140 }} value={form.body || ""} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} /></Field>
-            <Field label="Links (one per line)"><textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+            <Field label="Links (one per line)">
+              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} />
+              <BlobUploadControl folder={`research/${type}`} multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+            </Field>
           </>}
 
           <SaveBtn onClick={save} />

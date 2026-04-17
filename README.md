@@ -28,7 +28,13 @@ git push -u origin main
 2. Name it anything (e.g. `research-db-kv`)
 3. Click **Connect** — this auto-adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` to your env vars
 
-### 4. Redeploy
+### 4. Add Vercel Blob
+
+1. In your Vercel project → **Storage** tab → **Create Database** → **Blob**
+2. Create and connect the Blob store to this project
+3. This auto-adds `BLOB_READ_WRITE_TOKEN` to your Vercel env vars
+
+### 5. Redeploy
 
 ```bash
 # In Vercel dashboard → Deployments → Redeploy
@@ -37,7 +43,7 @@ git commit --allow-empty -m "trigger deploy"
 git push
 ```
 
-### 5. Set your URL
+### 6. Set your URL
 
 In Vercel project settings → **Domains** → add a custom domain or use the auto-generated one like `research-db-xyz123.vercel.app`. Keep it obscure — no auth needed.
 
@@ -47,7 +53,7 @@ In Vercel project settings → **Domains** → add a custom domain or use the au
 npm install
 # Copy env vars from Vercel dashboard → Settings → Environment Variables
 cp .env.example .env.local
-# Fill in KV_REST_API_URL and KV_REST_API_TOKEN
+# Fill in KV_REST_API_URL, KV_REST_API_TOKEN, and BLOB_READ_WRITE_TOKEN
 npm run dev
 ```
 
@@ -56,4 +62,5 @@ npm run dev
 - Data auto-saves 800ms after any change (debounced) — you'll see SAVING/SAVED in the header
 - Prices via Yahoo Finance — server-side to avoid CORS
 - Options G/L = (eq last − eq entry) × contracts × 100, flipped for puts
-- Thesis links point to OneDrive URLs — paste the share link directly
+- Attachments can be uploaded directly into the app with Vercel Blob storage
+- Server uploads to Vercel Blob are limited by Vercel Function body size, so keep individual files under 4.5 MB
