@@ -508,7 +508,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
-    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", links: "", models: "" }
+    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", materials: "", models: "" }
     : type === "tradeIdeas"
     ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
     : type === "sellSideResearch"
@@ -548,7 +548,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   const filteredItems = sortedItems.filter(item => {
     if (!query.trim()) return true;
     const e = item as Record<string, string>;
-    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.models, e.entry, e.target, e.stop]
+    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.materials, e.models, e.entry, e.target, e.stop]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -681,7 +681,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <BlobUploadControl accept=".xls,.xlsx,.csv,.pdf,.doc,.docx,.ppt,.pptx,.txt,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/pdf" buttonLabel="UPLOAD MODELS" folder="research/investment-ideas-models" multiple onChange={value => setForm(p => ({ ...p, models: value }))} value={form.models || ""} />
                 <StoredFileList value={form.models || ""} onRemove={url => setForm(p => ({ ...p, models: parseStoredUrls(p.models || "").filter(x => x !== url).join("\n") }))} />
               </Field>
-              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+              <Field label="Supplementary Materials">
+                <BlobUploadControl accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip,.csv,application/pdf,text/plain,text/csv" buttonLabel="UPLOAD MATERIALS" folder="research/investment-ideas-materials" multiple onChange={value => setForm(p => ({ ...p, materials: value }))} value={form.materials || ""} />
+                <StoredFileList value={form.materials || ""} accent="#9a6d18" onRemove={url => setForm(p => ({ ...p, materials: parseStoredUrls(p.materials || "").filter(x => x !== url).join("\n") }))} />
+              </Field>
             </>}
             {type === "tradeIdeas" && <>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
@@ -757,6 +760,11 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                     Financial models attached
                   </span>
                 )}
+                {type === "thesis" && (viewingItem as Record<string, string>).materials && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#efe6d7", color: "#8d6721" }}>
+                    Supplementary materials attached
+                  </span>
+                )}
                 {type === "tradeIdeas" && (viewingItem as Record<string, string>).entry && (
                   <span style={{ padding: "4px 10px", borderRadius: 999, background: "#edf1f6", color: "#506070" }}>
                     Entry: {String((viewingItem as Record<string, string>).entry)}
@@ -791,6 +799,12 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Financial Models</div>
                   <StoredFileList value={String((viewingItem as Record<string, string>).models || "")} />
+                </div>
+              )}
+              {!!(viewingItem as Record<string, string>).materials && (
+                <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Supplementary Materials</div>
+                  <StoredFileList value={String((viewingItem as Record<string, string>).materials || "")} accent="#9a6d18" />
                 </div>
               )}
             </div>
