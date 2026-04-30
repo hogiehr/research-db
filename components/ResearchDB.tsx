@@ -529,7 +529,7 @@ const DAILY_VIDEO_BY_DAY = [
   { title: "Gerry Rafferty - Baker Street", videoId: "Fo6aKnRnBxM" },
   { title: "Tears for Fears - Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
   { title: "Steely Dan - Dirty Work", videoId: "CH0JpBzi68E" },
-  { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
+  { title: "Hall & Oates - Out Of Touch (Official HD Video)", videoId: "D00M2KZH1J0" },
   { title: "Yazoo - Situation", videoId: "ysmVlaw36L0" },
   { title: "Manfred Mann's Earth Band - Blinded by the Light", videoId: "m4fS-OFRG2M" },
 ] as const;
