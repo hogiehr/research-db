@@ -458,7 +458,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
-    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", links: "" }
+    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", links: "", models: "" }
     : type === "tradeIdeas"
     ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
     : type === "sellSideResearch"
@@ -498,7 +498,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   const filteredItems = sortedItems.filter(item => {
     if (!query.trim()) return true;
     const e = item as Record<string, string>;
-    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.entry, e.target, e.stop]
+    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.models, e.entry, e.target, e.stop]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -627,6 +627,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
               <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="ai, earnings, semis" /></Field>
+              <Field label="Financial Models">
+                <textarea style={{ ...taStyle, height: 70 }} value={form.models || ""} onChange={e => setForm(p => ({ ...p, models: e.target.value }))} placeholder="Model URLs auto-fill after upload" />
+                <BlobUploadControl accept=".xls,.xlsx,.csv,.pdf,.doc,.docx,.ppt,.pptx,.txt,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/pdf" buttonLabel="UPLOAD MODELS" folder="research/investment-ideas-models" multiple onChange={value => setForm(p => ({ ...p, models: value }))} value={form.models || ""} />
+              </Field>
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
             {type === "tradeIdeas" && <>
@@ -678,7 +682,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
           <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 760, margin: "0 auto", padding: "18px 0 64px" }}>
               <div style={{ fontSize: 12, color: "#a07828", letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 18 }}>
-                {type === "thesis" ? "Security Thesis" : type === "tradeIdeas" ? "Trade Idea" : type === "macro" ? "Macro" : "Market Update"}
+                {type === "thesis" ? "Investment Ideas" : type === "tradeIdeas" ? "Trade Idea" : type === "macro" ? "Macro" : "Market Update"}
               </div>
 
               <div style={{ color: "#2f4368", fontFamily: "'Lora', serif", fontSize: 50, lineHeight: 1.08, marginBottom: 14 }}>
@@ -696,6 +700,11 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 {(viewingItem as Record<string, string>).tags && (
                   <span style={{ padding: "4px 10px", borderRadius: 999, background: "#efe6d7", color: "#8d6721" }}>
                     {String((viewingItem as Record<string, string>).tags)}
+                  </span>
+                )}
+                {type === "thesis" && (viewingItem as Record<string, string>).models && (
+                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "#e7eef6", color: "#32536f" }}>
+                    Financial models attached
                   </span>
                 )}
                 {type === "tradeIdeas" && (viewingItem as Record<string, string>).entry && (
@@ -723,6 +732,16 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <div style={{ marginTop: 34, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
                   {String((viewingItem as Record<string, string>).links || "").split("\n").filter(Boolean).map((l, j) => (
                     <a key={j} href={l} target="_blank" rel="noreferrer" style={{ color: "#9a6d18", fontSize: 13, textDecoration: "none" }}>
+                      {l}
+                    </a>
+                  ))}
+                </div>
+              )}
+              {!!(viewingItem as Record<string, string>).models && (
+                <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Financial Models</div>
+                  {String((viewingItem as Record<string, string>).models || "").split("\n").filter(Boolean).map((l, j) => (
+                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ color: "#32536f", fontSize: 13, textDecoration: "none" }}>
                       {l}
                     </a>
                   ))}
@@ -913,7 +932,7 @@ const TRADING_TABS = [
 ] as const;
 
 const RESEARCH_TABS = [
-  { key: "thesis", label: "Security Thesis" },
+  { key: "thesis", label: "Investment Ideas" },
   { key: "sellSide", label: "Sell-Side" },
   { key: "macro", label: "Macro" },
   { key: "marketUpdates", label: "Market Updates" },
@@ -973,7 +992,7 @@ export default function ResearchDB() {
             {!saving && lastSaved && <div style={{ fontSize: 12, color: "#335c57", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
             {!saving && !lastSaved && <div style={{ fontSize: 12, color: "#335c57", fontWeight: 700 }}>Ready</div>}
             <div style={{ fontSize: 11, color: "#7f776d", marginTop: 4 }}>
-              {primaryTab === "trading" ? "Portfolio, blotter, analytics, and review." : "Thesis work, files, macro, and market notes."}
+              {primaryTab === "trading" ? "Portfolio, blotter, analytics, and review." : "Investment ideas, files, macro, and market notes."}
             </div>
           </div>
         </div>
