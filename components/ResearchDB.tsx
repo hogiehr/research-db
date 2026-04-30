@@ -59,10 +59,10 @@ function sizeColor(x: number): string {
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#e2e4e8", border: "1px solid #2a2d35", borderRadius: 12, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", padding: 28 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(32,26,19,0.42)", backdropFilter: "blur(10px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ background: "rgba(255,250,242,0.96)", border: "1px solid #d8cab5", borderRadius: 24, width: "100%", maxWidth: 720, maxHeight: "85vh", overflowY: "auto", padding: 30, boxShadow: "0 24px 80px rgba(58,41,17,0.16)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <span style={{ fontSize: 11, color: "#a07828", letterSpacing: 2, textTransform: "uppercase" as const }}>{title}</span>
+          <span style={{ fontSize: 11, color: "#9f6b1b", letterSpacing: 2, textTransform: "uppercase" as const }}>{title}</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
         </div>
         {children}
@@ -71,14 +71,14 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-const iStyle: React.CSSProperties = { width: "100%", background: "#d4d6db", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#0d0f14", fontSize: 13, outline: "none" };
+const iStyle: React.CSSProperties = { width: "100%", background: "rgba(255,250,244,0.98)", border: "1px solid #cdbca4", borderRadius: 12, padding: "10px 12px", color: "#1f2a2a", fontSize: 13, outline: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)" };
 const taStyle: React.CSSProperties = { ...iStyle, height: 90, resize: "vertical" as const };
 const selStyle: React.CSSProperties = { ...iStyle };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 13 }}>
-      <label style={{ display: "block", fontSize: 10, color: "#3a3f4c", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>
+      <label style={{ display: "block", fontSize: 10, color: "#6a7169", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>
       {children}
     </div>
   );
@@ -86,7 +86,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SaveBtn({ onClick, label = "SAVE" }: { onClick: () => void; label?: string }) {
   return (
-    <button onClick={onClick} style={{ background: "#a07828", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>
+    <button onClick={onClick} style={{ background: "linear-gradient(135deg, #ba7a1c 0%, #8d5d17 100%)", color: "#fff9f0", border: "none", borderRadius: 12, padding: "11px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8, boxShadow: "0 10px 24px rgba(159,107,27,0.18)" }}>
       {label}
     </button>
   );
@@ -173,13 +173,13 @@ function ComposerShell({
   title: string;
 }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 120, background: "#f7f2ea", overflowY: "auto" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #ddd6c7", background: "rgba(247,242,234,0.96)", backdropFilter: "blur(6px)" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 120, background: "linear-gradient(180deg, #fbf7f0 0%, #f3ebdf 100%)", overflowY: "auto" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #ddd6c7", background: "rgba(251,247,240,0.94)", backdropFilter: "blur(10px)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button onClick={onBack} style={{ background: "none", border: "1px solid #c9c0b0", borderRadius: 999, color: "#3a3f4c", cursor: "pointer", fontSize: 13, padding: "6px 12px" }}>← Back</button>
-          <span style={{ fontSize: 11, color: "#a07828", letterSpacing: 2 }}>{title}</span>
+          <span style={{ fontSize: 11, color: "#9f6b1b", letterSpacing: 2 }}>{title}</span>
         </div>
-        <button onClick={onSave} style={{ background: "#ff7a1a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>{saveLabel}</button>
+        <button onClick={onSave} style={{ background: "linear-gradient(135deg, #ff9c31 0%, #d9780d 100%)", color: "#fff", border: "none", borderRadius: 999, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, boxShadow: "0 10px 24px rgba(217,120,13,0.22)" }}>{saveLabel}</button>
       </div>
       <div style={{ width: "100%", margin: 0, padding: "24px 18px 40px", display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 28, alignItems: "start" }}>
         {children}
@@ -904,7 +904,17 @@ function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSav
   );
 }
 
-const TABS = ["POSITIONS", "BLOTTER", "ANALYTICS", "JOURNAL", "TRADE IDEAS", "SECURITY THESIS", "SELL-SIDE PDFS", "MACRO", "MARKET UPDATES"];
+const TABS = [
+  { label: "Positions", eyebrow: "Portfolio" },
+  { label: "Blotter", eyebrow: "Trading" },
+  { label: "Analytics", eyebrow: "Stats" },
+  { label: "Journal", eyebrow: "Review" },
+  { label: "Trade Ideas", eyebrow: "Pipeline" },
+  { label: "Security Thesis", eyebrow: "Deep Work" },
+  { label: "Sell-Side PDFs", eyebrow: "Library" },
+  { label: "Macro", eyebrow: "Top Down" },
+  { label: "Market Updates", eyebrow: "Pulse" },
+];
 
 export default function ResearchDB() {
   const [tab, setTab] = useState(0);
@@ -933,39 +943,63 @@ export default function ResearchDB() {
 
   if (!data) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#e8e9ec" }}>
-        <div style={{ fontSize: 11, color: "#5a6070", letterSpacing: 3 }}>LOADING...</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "transparent" }}>
+        <div style={{ padding: "22px 28px", borderRadius: 20, border: "1px solid #d8cab5", background: "rgba(255,250,242,0.86)", boxShadow: "0 20px 60px rgba(73,54,29,0.10)", fontSize: 11, color: "#74684f", letterSpacing: 3 }}>LOADING PLAYGROUND...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#e8e9ec" }}>
-      {/* Header */}
-      <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex", alignItems: "center", height: 52 }}>
-        <div style={{ width: 3, height: 18, background: "#a07828", borderRadius: 2, marginRight: 14 }} />
-        <span style={{ fontSize: 11, color: "#a07828", letterSpacing: 3 }}>RESEARCH DB</span>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          {saving && <span style={{ fontSize: 10, color: "#4a5060", letterSpacing: 1 }}>SAVING...</span>}
-          {!saving && lastSaved && <span style={{ fontSize: 10, color: "#b0b3bc", letterSpacing: 1 }}>SAVED {lastSaved.toLocaleTimeString()}</span>}
+    <div style={{ minHeight: "100vh", background: "transparent", padding: 20 }}>
+      <div style={{ maxWidth: 1480, margin: "0 auto" }}>
+        <div style={{ marginBottom: 18, padding: "26px 28px 22px", borderRadius: 30, border: "1px solid #d9c8b0", background: "linear-gradient(135deg, rgba(255,251,245,0.92) 0%, rgba(242,233,219,0.88) 100%)", boxShadow: "0 22px 70px rgba(76,57,31,0.11)" }}>
+          <div style={{ display: "flex", gap: 18, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" as const }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 999, background: "rgba(239,226,201,0.72)", color: "#94631a", fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase" as const, marginBottom: 16 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: "#335c57", display: "inline-block" }} />
+                Hogan&apos;s Playground
+              </div>
+              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 52, lineHeight: 0.96, color: "#223130", marginBottom: 12 }}>
+                Private market workspace,
+                <br />
+                cleaner and way less miserable.
+              </div>
+              <div style={{ maxWidth: 700, color: "#6a7169", fontSize: 15, lineHeight: 1.7 }}>
+                Trade blotter, thesis writing, macro notes, journal work, analytics, and sell-side files all in one place with a softer reading-first layout.
+              </div>
+            </div>
+            <div style={{ minWidth: 220, padding: "16px 18px", borderRadius: 22, background: "rgba(255,250,244,0.78)", border: "1px solid #ddcfbc" }}>
+              <div style={{ fontSize: 10, color: "#887a64", letterSpacing: 1.5, textTransform: "uppercase" as const, marginBottom: 8 }}>Workspace Status</div>
+              {saving && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Saving changes...</div>}
+              {!saving && lastSaved && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
+              {!saving && !lastSaved && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Ready to work</div>}
+              <div style={{ fontSize: 12, color: "#7f776d", marginTop: 6, lineHeight: 1.5 }}>Everything here stays internal and updates automatically while you work.</div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Tab bar */}
-      <div style={{ borderBottom: "1px solid #141720", padding: "0 28px", display: "flex" }}>
-        {TABS.map((t, i) => (
-          <button key={i} onClick={() => setTab(i)} style={{
-            background: "none", border: "none",
-            borderBottom: tab === i ? "2px solid #c9a84c" : "2px solid transparent",
-            color: tab === i ? "#a07828" : "#4a5060",
-            padding: "13px 18px", fontSize: 10, letterSpacing: 2, cursor: "pointer",
-            transition: "color 0.15s", marginBottom: -1,
-          }}>{t}</button>
-        ))}
-      </div>
+        <div style={{ marginBottom: 22, padding: 12, borderRadius: 24, border: "1px solid #dacbb8", background: "rgba(255,250,244,0.76)", boxShadow: "0 16px 50px rgba(73,54,29,0.08)" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+            {TABS.map((t, i) => (
+              <button key={t.label} onClick={() => setTab(i)} style={{
+                background: tab === i ? "linear-gradient(135deg, #335c57 0%, #274844 100%)" : "rgba(255,250,244,0.88)",
+                border: tab === i ? "1px solid #335c57" : "1px solid #ddcfbc",
+                color: tab === i ? "#f8f4ec" : "#3d4643",
+                borderRadius: 18,
+                padding: "12px 14px",
+                cursor: "pointer",
+                minWidth: 138,
+                textAlign: "left",
+                boxShadow: tab === i ? "0 12px 26px rgba(39,72,68,0.22)" : "none",
+              }}>
+                <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase" as const, opacity: tab === i ? 0.72 : 0.55, marginBottom: 4 }}>{t.eyebrow}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{t.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Content */}
-      <div style={{ padding: "28px 28px", maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ padding: "8px 8px 36px", maxWidth: 1480, margin: "0 auto" }}>
         {tab === 0 && <PositionsTab data={data} onChange={update} />}
         {tab === 1 && <BlotterTab data={data as any} onChange={update as any} />}
         {tab === 2 && <AnalyticsTab data={data as any} />}
@@ -975,6 +1009,7 @@ export default function ResearchDB() {
         {tab === 6 && <SellSideFilesTab folders={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} />}
         {tab === 7 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
         {tab === 8 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+        </div>
       </div>
     </div>
   );
