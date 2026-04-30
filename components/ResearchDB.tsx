@@ -528,10 +528,10 @@ const DAILY_VIDEO_BY_DAY = [
   { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
   { title: "Gerry Rafferty - Baker Street", videoId: "Fo6aKnRnBxM" },
   { title: "Tears for Fears - Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
-  { title: "Steve Winwood - Higher Love", videoId: "k9olaIio3l8" },
-  { title: "Talking Heads - This Must Be the Place", videoId: "o9gK2fOq4MY" },
-  { title: "Fleetwood Mac - Everywhere", videoId: "YF1R0hc5Q2I" },
-  { title: "Dire Straits - Money for Nothing", videoId: "wTP2RUD_cL0" },
+  { title: "Steely Dan - Dirty Work", videoId: "CH0JpBzi68E" },
+  { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
+  { title: "Yazoo - Situation", videoId: "ysmVlaw36L0" },
+  { title: "Manfred Mann's Earth Band - Blinded by the Light", videoId: "m4fS-OFRG2M" },
 ] as const;
 
 function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType; contextData: DBData }) {
