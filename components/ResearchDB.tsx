@@ -524,6 +524,16 @@ function normalizedSearchText(parts: unknown[]) {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
+const DAILY_VIDEO_BY_DAY = [
+  { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
+  { title: "Toto - Hold the Line", videoId: "htgr3pvBr-I" },
+  { title: "Fleetwood Mac - Everywhere", videoId: "YF1R0hc5Q2I" },
+  { title: "Steely Dan - Peg", videoId: "LI7NDDQLvbo" },
+  { title: "Talking Heads - This Must Be the Place", videoId: "o9gK2fOq4MY" },
+  { title: "Phil Collins - I Don’t Care Anymore", videoId: "C6PNc9KN50M" },
+  { title: "Dire Straits - Money for Nothing", videoId: "wTP2RUD_cL0" },
+] as const;
+
 function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType; contextData: DBData }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
@@ -1154,6 +1164,7 @@ export default function ResearchDB() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [globalQuery, setGlobalQuery] = useState("");
+  const dailyVideo = DAILY_VIDEO_BY_DAY[new Date().getDay()];
 
   // Load on mount
   useEffect(() => {
@@ -1317,21 +1328,21 @@ export default function ResearchDB() {
               </div>
             )}
           </div>
-          <div style={{ ...softPanel, maxWidth: 860, marginTop: 12, padding: 16 }}>
+          <div style={{ ...softPanel, maxWidth: 620, marginTop: 12, padding: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" as const }}>
               <div>
-                <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Out Of Touch</div>
-                <div style={{ fontSize: 12, color: "#6f756f" }}>A completely unnecessary but spiritually correct addition.</div>
+                <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Daily Tape Song</div>
+                <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVideo.title}</div>
               </div>
-              <a href="https://www.youtube.com/watch?v=DCkJ5lGPqFs" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#254b49", textDecoration: "none", letterSpacing: 1 }}>
+              <a href={`https://www.youtube.com/watch?v=${dailyVideo.videoId}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#254b49", textDecoration: "none", letterSpacing: 1 }}>
                 OPEN ON YOUTUBE
               </a>
             </div>
             <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #ddd1bf", background: "#f4ebdd" }}>
               <iframe
-                src="https://www.youtube.com/embed/DCkJ5lGPqFs"
-                title="Hall and Oates - Out of Touch"
-                style={{ width: "100%", aspectRatio: "16 / 9", border: "none", display: "block" }}
+                src={`https://www.youtube.com/embed/${dailyVideo.videoId}`}
+                title={dailyVideo.title}
+                style={{ width: "100%", aspectRatio: "16 / 9", maxHeight: 260, border: "none", display: "block" }}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
