@@ -1172,16 +1172,6 @@ export default function ResearchDB() {
 
   const update = useCallback((d: DBData) => setData(d), []);
 
-  const dashboardStats = useMemo(() => {
-    if (!data) return [];
-    return [
-      { label: "Open Trades", value: String((data.blotter ?? []).filter(t => t.status === "Open").length), tone: "#32536f" },
-      { label: "Published Notes", value: String([...data.tradeIdeas, ...data.thesis, ...data.macro, ...data.marketUpdates].filter(entry => displayEntryStatus(entry) === "Published").length), tone: "#1f7a37" },
-      { label: "Drafts", value: String([...data.tradeIdeas, ...data.thesis, ...data.macro, ...data.marketUpdates].filter(entry => displayEntryStatus(entry) !== "Published").length), tone: "#8d6721" },
-      { label: "Sell-Side Folders", value: String((data.sellSideResearch ?? []).filter(folder => (folder as Record<string, unknown>).name).length), tone: "#7c3aed" },
-    ];
-  }, [data]);
-
   const globalResults = useMemo(() => {
     if (!data || !globalQuery.trim()) return [];
     const q = globalQuery.trim().toLowerCase();
@@ -1296,8 +1286,8 @@ export default function ResearchDB() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 18, display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(320px, 1fr)", gap: 14, alignItems: "start" }}>
-          <div style={{ background: "rgba(255,250,242,0.82)", border: "1px solid #d8cab5", borderRadius: 18, padding: 16 }}>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ background: "rgba(255,250,242,0.82)", border: "1px solid #d8cab5", borderRadius: 18, padding: 16, maxWidth: 860 }}>
             <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 8 }}>Universal Search</div>
             <input
               style={{ ...iStyle, maxWidth: "100%" }}
@@ -1324,15 +1314,6 @@ export default function ResearchDB() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-            {dashboardStats.map(stat => (
-              <div key={stat.label} style={{ background: "rgba(255,250,242,0.78)", border: "1px solid #d8cab5", borderRadius: 18, padding: 16 }}>
-                <div style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d", marginBottom: 10 }}>{stat.label}</div>
-                <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 34, color: stat.tone, lineHeight: 1 }}>{stat.value}</div>
-              </div>
-            ))}
           </div>
         </div>
 
