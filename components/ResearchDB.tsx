@@ -322,7 +322,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #1e2128" }}>
-                {["STATUS","TERM","TICKER","UNITS","L/S","FILL","LAST","MV","COST","G/L $","G/L %","SIZE","THESIS",""].map(h => <th key={h} style={th}>{h}</th>)}
+                {["STATUS","TERM","TICKER","UNITS","L/S","FILL","LAST","MV","COST","G/L $","G/L %","SIZE","THESIS"].map(h => <th key={h} style={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -345,7 +345,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
                   <td style={{ ...td, fontSize: 11, color: "#a07828", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>
                     {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#a07828", textDecoration: "none" }}>↗ link</a> : "—"}
                   </td>
-                  <td style={td}>
+                  <td style={{ ...td, display: "none" }}>
                     <button onClick={() => onChange({ ...data, equityPositions: data.equityPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
                   </td>
                 </tr>
@@ -365,7 +365,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #1e2128" }}>
-                {["TICKER","P/C","STRIKE","EXP","UNITS","FILL","BASIS","EQ ENTRY","EQ LAST","G/L $","G/L %","SIZE","THESIS",""].map(h => <th key={h} style={th}>{h}</th>)}
+                {["TICKER","P/C","STRIKE","EXP","UNITS","FILL","BASIS","EQ ENTRY","EQ LAST","G/L $","G/L %","SIZE","THESIS"].map(h => <th key={h} style={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -388,7 +388,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
                   <td style={{ ...td, fontSize: 11 }}>
                     {r.thesis ? <a href={r.thesis} target="_blank" rel="noreferrer" style={{ color: "#a07828", textDecoration: "none" }}>↗ link</a> : "—"}
                   </td>
-                  <td style={td}>
+                  <td style={{ ...td, display: "none" }}>
                     <button onClick={() => onChange({ ...data, optionsPositions: data.optionsPositions.filter(p => p.id !== r.id) })} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
                   </td>
                 </tr>
