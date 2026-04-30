@@ -526,11 +526,11 @@ function normalizedSearchText(parts: unknown[]) {
 
 const DAILY_VIDEO_BY_DAY = [
   { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
-  { title: "Toto - Hold the Line", videoId: "htgr3pvBr-I" },
-  { title: "Fleetwood Mac - Everywhere", videoId: "YF1R0hc5Q2I" },
-  { title: "Steely Dan - Peg", videoId: "LI7NDDQLvbo" },
+  { title: "Gerry Rafferty - Baker Street", videoId: "Fo6aKnRnBxM" },
+  { title: "Tears for Fears - Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
+  { title: "Steve Winwood - Higher Love", videoId: "k9olaIio3l8" },
   { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
-  { title: "Phil Collins - I Don’t Care Anymore", videoId: "C6PNc9KN50M" },
+  { title: "Fleetwood Mac - Everywhere", videoId: "YF1R0hc5Q2I" },
   { title: "Dire Straits - Money for Nothing", videoId: "wTP2RUD_cL0" },
 ] as const;
 
