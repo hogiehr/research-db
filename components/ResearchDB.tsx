@@ -231,7 +231,7 @@ function ComposerShell({
         </div>
         <button onClick={onSave} style={{ background: "linear-gradient(135deg, #ff9c31 0%, #d9780d 100%)", color: "#fff", border: "none", borderRadius: 999, padding: "10px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, boxShadow: "0 10px 24px rgba(217,120,13,0.22)" }}>{saveLabel}</button>
       </div>
-      <div style={{ width: "100%", margin: 0, padding: "24px 18px 40px", display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 28, alignItems: "start" }}>
+      <div style={{ width: "100%", margin: 0, padding: "24px 18px 40px", display: "grid", gridTemplateColumns: "220px minmax(0, 980px)", gap: 28, alignItems: "start", justifyContent: "center" }}>
         {children}
       </div>
     </div>
