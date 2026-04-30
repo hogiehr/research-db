@@ -651,12 +651,8 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               )}
 
               {e.links && (
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column" as const, gap: 2 }}>
-                  {e.links.split("\n").filter(Boolean).map((l, j) => (
-                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#a07828", textDecoration: "none" }}>
-                      ↗ {l.length > 70 ? l.slice(0, 70) + "…" : l}
-                    </a>
-                  ))}
+                <div style={{ marginTop: 10 }}>
+                  <StoredFileList value={String(e.links)} accent="#9a6d18" />
                 </div>
               )}
             </div>
@@ -694,12 +690,18 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
               <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
               <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
-              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+              <Field label="Supporting Files">
+                <BlobUploadControl accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip,.csv,application/pdf,text/plain,text/csv" buttonLabel="UPLOAD FILES" folder="research/trade-ideas-files" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+                <StoredFileList value={form.links || ""} accent="#9a6d18" onRemove={url => setForm(p => ({ ...p, links: parseStoredUrls(p.links || "").filter(x => x !== url).join("\n") }))} />
+              </Field>
             </>}
             {(type === "macro" || type === "marketUpdates") && <>
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
               <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
-              <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
+              <Field label="Supporting Files">
+                <BlobUploadControl accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip,.csv,application/pdf,text/plain,text/csv" buttonLabel="UPLOAD FILES" folder={`research/${type}-files`} multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+                <StoredFileList value={form.links || ""} accent="#9a6d18" onRemove={url => setForm(p => ({ ...p, links: parseStoredUrls(p.links || "").filter(x => x !== url).join("\n") }))} />
+              </Field>
             </>}
           </div>
           <div style={{ width: "100%", margin: 0 }}>
@@ -826,9 +828,9 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             </div>
             <Field label="Title"><input style={iStyle} value={form.title || ""} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Initiation / update title" /></Field>
             <Field label="Notes"><textarea style={taStyle} value={form.notes || ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Quick summary, key takeaways, PT changes..." /></Field>
-            <Field label="PDF Links (one per line)">
-              <textarea style={{ ...taStyle, height: 60 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} placeholder="PDF URL auto-fills after upload" />
+            <Field label="Stored PDFs">
               <BlobUploadControl accept=".pdf,application/pdf" buttonLabel="UPLOAD PDF" folder="research/sell-side-pdfs" multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
+              <StoredFileList value={form.links || ""} accent="#9a6d18" onRemove={url => setForm(p => ({ ...p, links: parseStoredUrls(p.links || "").filter(x => x !== url).join("\n") }))} />
             </Field>
           </>
 
