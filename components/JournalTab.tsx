@@ -4,7 +4,7 @@ import { DBData } from "@/lib/db";
 
 export type JournalEntry = { id: number; date: string; body: string; };
 
-const iStyle: React.CSSProperties = { width: "100%", background: "#d4d6db", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#0d0f14", fontSize: 12, outline: "none", fontFamily: "'DM Mono', monospace" };
+const iStyle: React.CSSProperties = { width: "100%", background: "#fffaf2", border: "1px solid #d8cab5", borderRadius: 12, padding: "10px 12px", color: "#20302f", fontSize: 12, outline: "none", fontFamily: "'DM Mono', monospace" };
 
 export default function JournalTab({ data, onChange }: { data: DBData; onChange: (d: DBData) => void }) {
   const entries: JournalEntry[] = (data as any).journal ?? [];
@@ -42,11 +42,11 @@ export default function JournalTab({ data, onChange }: { data: DBData; onChange:
     <div style={{ maxWidth: 800, margin: "0 auto" }}>
       {!writing ? (
         <button onClick={() => { setWriting(true); setNewDate(new Date().toISOString().slice(0, 10)); }}
-          style={{ width: "100%", background: "#e2e4e8", border: "1px dashed #2a2d35", borderRadius: 8, padding: "16px", fontSize: 11, color: "#4a5060", cursor: "pointer", letterSpacing: 2, marginBottom: 24, textAlign: "left" as const, fontFamily: "'DM Mono', monospace" }}>
+          style={{ width: "100%", background: "rgba(255,250,244,0.82)", border: "1px dashed #d8cab5", borderRadius: 16, padding: "18px", fontSize: 11, color: "#6f756f", cursor: "pointer", letterSpacing: 2, marginBottom: 24, textAlign: "left" as const, fontFamily: "'DM Mono', monospace" }}>
           + NEW ENTRY
         </button>
       ) : (
-        <div style={{ background: "#e2e4e8", border: "1px solid #c9a84c40", borderRadius: 8, padding: 20, marginBottom: 24 }}>
+        <div style={{ background: "rgba(255,250,244,0.86)", border: "1px solid #ddd1bf", borderRadius: 18, padding: 22, marginBottom: 24, boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
             <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} style={{ ...iStyle, width: "auto", fontSize: 11 }} />
             <span style={{ fontSize: 10, color: "#3a3f4c", letterSpacing: 1 }}>{newDate ? dayOfWeek(newDate) : ""}</span>
@@ -63,14 +63,14 @@ export default function JournalTab({ data, onChange }: { data: DBData; onChange:
       {sorted.length === 0 && <div style={{ textAlign: "center", padding: 80, color: "#b0b3bc", fontSize: 12, letterSpacing: 2 }}>NO ENTRIES YET</div>}
 
       {latest && (
-        <div style={{ background: "#f0f1f3", border: "1px solid #2a2d35", borderRadius: 10, padding: "22px 24px", marginBottom: 20 }}>
+        <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, padding: "24px 26px", marginBottom: 20, boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 4 }}>LATEST</div>
               <div style={{ fontSize: 13, color: "#0d0f14", fontFamily: "'DM Mono', monospace" }}>{dayOfWeek(latest.date)}</div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { setEditing(latest.id); setEditBody(latest.body); }} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
+              <button onClick={() => { setEditing(latest.id); setEditBody(latest.body); }} style={{ background: "rgba(255,250,244,0.88)", border: "1px solid #ddd1bf", color: "#6f756f", borderRadius: 999, padding: "4px 10px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
               <button onClick={() => remove(latest.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function JournalTab({ data, onChange }: { data: DBData; onChange:
               </div>
             </>
           ) : (
-            <p style={{ fontSize: 15, color: "#c8d0d8", lineHeight: 1.8, fontFamily: "'Lora', serif", whiteSpace: "pre-wrap" as const }}>{latest.body}</p>
+              <p style={{ fontSize: 15, color: "#2d3c3b", lineHeight: 1.8, fontFamily: "'Lora', serif", whiteSpace: "pre-wrap" as const }}>{latest.body}</p>
           )}
         </div>
       )}
@@ -94,7 +94,7 @@ export default function JournalTab({ data, onChange }: { data: DBData; onChange:
           <div style={{ fontSize: 10, color: "#4a5060", letterSpacing: 2, marginBottom: 10 }}>PREVIOUS ENTRIES</div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
             {older.map(entry => (
-              <div key={entry.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden" }}>
+              <div key={entry.id} style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 16, overflow: "hidden", boxShadow: "0 10px 24px rgba(73,54,29,0.03)" }}>
                 <div onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 18px", cursor: "pointer" }}>
                   <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
@@ -107,7 +107,7 @@ export default function JournalTab({ data, onChange }: { data: DBData; onChange:
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, marginLeft: 12 }}>
                     {expanded === entry.id && <>
-                      <button onClick={e => { e.stopPropagation(); setEditing(entry.id); setEditBody(entry.body); }} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "2px 8px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
+                      <button onClick={e => { e.stopPropagation(); setEditing(entry.id); setEditBody(entry.body); }} style={{ background: "rgba(255,250,244,0.88)", border: "1px solid #ddd1bf", color: "#6f756f", borderRadius: 999, padding: "3px 9px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
                       <button onClick={e => { e.stopPropagation(); remove(entry.id); }} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 14 }}>✕</button>
                     </>}
                     <span style={{ fontSize: 11, color: "#5a6070" }}>{expanded === entry.id ? "▲" : "▼"}</span>

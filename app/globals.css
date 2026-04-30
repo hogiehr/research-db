@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f6f0e6;
-  --bg-deep: #eadfce;
-  --panel: rgba(255, 251, 245, 0.82);
+  --bg: #f7f1e8;
+  --bg-deep: #ecdfcf;
+  --panel: rgba(255, 251, 245, 0.88);
   --panel-strong: #fffaf2;
-  --line: #dbcdb9;
-  --line-strong: #bda98d;
-  --text: #1f2a2a;
-  --muted: #6a7169;
-  --brand: #9f6b1b;
-  --brand-soft: #efe2c9;
-  --accent: #335c57;
-  --accent-soft: #dce9e5;
-  --danger: #a84d43;
-  --shadow: 0 20px 60px rgba(73, 54, 29, 0.10);
+  --line: #ddcfba;
+  --line-strong: #c7b292;
+  --text: #20302f;
+  --muted: #6f736a;
+  --brand: #9a6a28;
+  --brand-soft: #f2e4cb;
+  --accent: #254b49;
+  --accent-soft: #dfe9e6;
+  --danger: #aa5b52;
+  --shadow: 0 22px 60px rgba(73, 54, 29, 0.08);
 }
 
 *, *::before, *::after {
@@ -25,9 +25,9 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(210, 188, 149, 0.24), transparent 28%),
-    radial-gradient(circle at top right, rgba(115, 147, 138, 0.16), transparent 26%),
-    linear-gradient(180deg, #fbf6ee 0%, #f3ebdf 100%);
+    radial-gradient(circle at top left, rgba(202, 177, 134, 0.20), transparent 28%),
+    radial-gradient(circle at top right, rgba(92, 128, 121, 0.13), transparent 26%),
+    linear-gradient(180deg, #fcf7ef 0%, #f4ebdf 100%);
 }
 
 body {
@@ -42,7 +42,7 @@ a {
 }
 
 ::selection {
-  background: rgba(159, 107, 27, 0.18);
+  background: rgba(154, 106, 40, 0.18);
 }
 
 ::-webkit-scrollbar {

@@ -43,10 +43,10 @@ function calcStats(trades: TradeEntry[]): Stats {
 
 function StatCard({ label, value, color, sub }: { label: string; value: string; color?: string; sub?: string }) {
   return (
-    <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 18px", flex: 1, minWidth: 120 }}>
-      <div style={{ fontSize: 10, color: "#4a5060", letterSpacing: 1.5, marginBottom: 6, textTransform: "uppercase" as const }}>{label}</div>
+    <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, padding: "18px 20px", flex: 1, minWidth: 120, boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
+      <div style={{ fontSize: 10, color: "#7b7466", letterSpacing: 1.5, marginBottom: 6, textTransform: "uppercase" as const }}>{label}</div>
       <div style={{ fontSize: 20, color: color ?? "#0d0f14", fontWeight: 600, fontFamily: "'DM Mono', monospace" }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: "#4a5060", marginTop: 3 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 10, color: "#6f756f", marginTop: 3 }}>{sub}</div>}
     </div>
   );
 }
@@ -126,7 +126,7 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
 
   const pfDisplay = overall.profitFactor == null ? "—" : overall.profitFactor === Infinity ? "∞" : overall.profitFactor.toFixed(2) + "x";
   const tableHeaders = ["CLASS","TRADES","WIN%","AVG WIN","AVG LOSS","P.F.","TOTAL GL","AVG HOLD"];
-  const thStyle = { padding: "8px 12px", color: "#4a5060", fontWeight: 400, fontSize: 10, letterSpacing: 1, textAlign: "left" as const };
+  const thStyle = { padding: "12px 14px", color: "#7b7466", fontWeight: 500, fontSize: 10, letterSpacing: 1.3, textAlign: "left" as const };
 
   return (
     <div>
@@ -148,9 +148,9 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
         {/* BY TERM */}
         <div>
           <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 14 }}>BY TERM</div>
-          <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, overflow: "hidden", marginBottom: 16, boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <thead><tr style={{ borderBottom: "1px solid #e6dccd", background: "rgba(255,251,245,0.88)" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 <StatsRow label="ST" s={byTerm.ST} color={TERM_COLOR.ST} />
                 <StatsRow label="MT" s={byTerm.MT} color={TERM_COLOR.MT} />
@@ -164,7 +164,7 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
               const s = byTerm[term];
               if (s.total === 0) return null;
               return (
-                <div key={term} style={{ background: "#f0f1f3", border: `1px solid ${TERM_COLOR[term]}25`, borderLeft: `3px solid ${TERM_COLOR[term]}`, borderRadius: 8, padding: "12px 16px" }}>
+                <div key={term} style={{ background: "rgba(255,250,244,0.82)", border: `1px solid ${TERM_COLOR[term]}20`, borderLeft: `3px solid ${TERM_COLOR[term]}`, borderRadius: 16, padding: "14px 18px", boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <span style={{ fontSize: 10, color: TERM_COLOR[term], letterSpacing: 1.5 }}>{TERM_LABEL[term]}</span>
                     <span style={{ fontSize: 11, color: glColor(s.totalGL), fontWeight: 600 }}>{fmt$(s.totalGL)}</span>
@@ -184,9 +184,9 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
         {/* BY ASSET CLASS + best/worst */}
         <div>
           <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 14 }}>BY ASSET CLASS</div>
-          <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, overflow: "hidden", marginBottom: 20 }}>
+          <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, overflow: "hidden", marginBottom: 20, boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <thead><tr style={{ borderBottom: "1px solid #e6dccd", background: "rgba(255,251,245,0.88)" }}>{tableHeaders.map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {Object.entries(byClass).map(([ac, s]) => {
                   const pf = s.profitFactor == null ? "—" : s.profitFactor === Infinity ? "∞" : s.profitFactor.toFixed(2) + "x";
@@ -206,7 +206,7 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
           </div>
 
           <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 14 }}>BEST & WORST</div>
-          <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "6px 18px 4px" }}>
+          <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, padding: "8px 20px 8px", boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
             <div style={{ fontSize: 10, color: "#16a34a", letterSpacing: 1.5, padding: "10px 0 4px" }}>TOP 3 WINNERS</div>
             {(() => { const s = [...closed].map(t => ({ t, gl: computeGL(t) })).filter(x => x.gl != null && x.gl > 0).sort((a, b) => b.gl! - a.gl!).slice(0, 3); return s.length === 0 ? <div style={{ fontSize: 11, color: "#5a6070", padding: "8px 0" }}>None yet</div> : s.map(({ t }) => <TradeRow key={t.id} t={t} />); })()}
             <div style={{ fontSize: 10, color: "#dc2626", letterSpacing: 1.5, padding: "14px 0 4px" }}>TOP 3 LOSERS</div>
@@ -231,7 +231,7 @@ export default function AnalyticsTab({ data }: { data: DBData }) {
         return (
           <div style={{ marginTop: 28 }}>
             <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 14 }}>CUMULATIVE G/L</div>
-            <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "20px 20px 12px" }}>
+            <div style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, padding: "22px 22px 14px", boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
               <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
                 <defs><linearGradient id="glGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={fc} stopOpacity="0.2" /><stop offset="100%" stopColor={fc} stopOpacity="0" /></linearGradient></defs>
                 {min < 0 && max > 0 && <line x1={PAD} y1={y(0)} x2={W - PAD} y2={y(0)} stroke="#b0b3bc" strokeWidth="1" strokeDasharray="4 4" />}

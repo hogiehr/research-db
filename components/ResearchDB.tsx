@@ -74,6 +74,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 const iStyle: React.CSSProperties = { width: "100%", background: "rgba(255,250,244,0.98)", border: "1px solid #cdbca4", borderRadius: 12, padding: "10px 12px", color: "#1f2a2a", fontSize: 13, outline: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)" };
 const taStyle: React.CSSProperties = { ...iStyle, height: 90, resize: "vertical" as const };
 const selStyle: React.CSSProperties = { ...iStyle };
+const softPanel: React.CSSProperties = { background: "rgba(255,250,244,0.78)", border: "1px solid #ddd1bf", borderRadius: 16, boxShadow: "0 14px 34px rgba(73,54,29,0.05)" };
+const tableShell: React.CSSProperties = { overflowX: "auto", background: "rgba(255,250,244,0.78)", borderRadius: 18, border: "1px solid #ddd1bf", boxShadow: "0 14px 34px rgba(73,54,29,0.05)" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -311,8 +313,8 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
   const totalOptGL = optRows.reduce((s, r) => s + (r.gl ?? 0), 0);
   const grandTotal = totalEqGL + totalOptGL;
 
-  const th: React.CSSProperties = { padding: "6px 12px", color: "#4a5060", fontWeight: 400, textAlign: "left", fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" };
-  const td: React.CSSProperties = { padding: "9px 12px", fontSize: 12, whiteSpace: "nowrap" };
+  const th: React.CSSProperties = { padding: "12px 14px", color: "#7b7466", fontWeight: 500, textAlign: "left", fontSize: 10, letterSpacing: 1.3, whiteSpace: "nowrap", textTransform: "uppercase" as const };
+  const td: React.CSSProperties = { padding: "14px 14px", fontSize: 12, whiteSpace: "nowrap" };
 
   return (
     <div>
@@ -325,7 +327,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
           <input
             type="number" defaultValue={eqBase}
             onBlur={e => updateBaseline("equityBaseline", parseFloat(e.target.value))}
-            style={{ width: 80, background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#0d0f14", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+            style={{ width: 84, background: "#fffaf2", border: "1px solid #d8cab5", borderRadius: 10, padding: "6px 9px", color: "#20302f", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -334,19 +336,19 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
           <input
             type="number" defaultValue={optBase}
             onBlur={e => updateBaseline("optionsBaseline", parseFloat(e.target.value))}
-            style={{ width: 80, background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 5, padding: "4px 8px", color: "#0d0f14", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
+            style={{ width: 84, background: "#fffaf2", border: "1px solid #d8cab5", borderRadius: 10, padding: "6px 9px", color: "#20302f", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none" }}
           />
         </div>
         <span style={{ fontSize: 10, color: "#b0b3bc" }}>updates on blur · persisted</span>
       </div>
 
       {/* Summary bar */}
-      <div style={{ display: "flex", gap: 32, marginBottom: 24, padding: "14px 20px", background: "#e2e4e8", border: "1px solid #1e2128", borderRadius: 8, alignItems: "center" }}>
+      <div style={{ ...softPanel, display: "flex", gap: 32, marginBottom: 24, padding: "18px 22px", alignItems: "center" }}>
         <div>
           <div style={{ fontSize: 10, color: "#4a5060", letterSpacing: 1.5, marginBottom: 3 }}>TOTAL OPEN G/L</div>
           <div style={{ fontSize: 20, color: glColor(grandTotal), fontWeight: 600 }}>{fmt$(grandTotal)}</div>
         </div>
-        <div style={{ width: 1, height: 36, background: "#c4c7ce" }} />
+        <div style={{ width: 1, height: 36, background: "#ddd1bf" }} />
         <div>
           <div style={{ fontSize: 10, color: "#4a5060", letterSpacing: 1.5, marginBottom: 3 }}>EQUITY</div>
           <div style={{ fontSize: 14, color: glColor(totalEqGL) }}>{fmt$(totalEqGL)}</div>
@@ -366,18 +368,18 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 10, color: "#a07828", letterSpacing: 2 }}>EQUITY POSITIONS</span>
-          <button onClick={() => setAddEq(true)} style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+          <button onClick={() => setAddEq(true)} style={{ background: "#eef6ef", border: "1px solid #cfe1d2", color: "#2f6a49", borderRadius: 999, padding: "7px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
         </div>
-        <div style={{ overflowX: "auto", background: "#f0f1f3", borderRadius: 8, border: "1px solid #1e2128" }}>
+        <div style={tableShell}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #1e2128" }}>
+              <tr style={{ borderBottom: "1px solid #e6dccd", background: "rgba(255,251,245,0.88)" }}>
                 {["STATUS","TERM","TICKER","UNITS","L/S","FILL","LAST","MV","COST","G/L $","G/L %","SIZE","THESIS"].map(h => <th key={h} style={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
               {eqRows.map(r => (
-                <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
+                <tr key={r.id} style={{ borderBottom: "1px solid #eee5d8" }}>
                   <td style={{ ...td, color: "#16a34a" }}>{r.status}</td>
                   <td style={{ ...td, color: "#3a3f4c" }}>{r.term}</td>
                   <td style={{ ...td, color: "#0d0f14", fontWeight: 600 }}>{r.ticker}</td>
@@ -409,18 +411,18 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 10, color: "#a07828", letterSpacing: 2 }}>OPTIONS POSITIONS</span>
-          <button onClick={() => setAddOpt(true)} style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 5, padding: "4px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
+          <button onClick={() => setAddOpt(true)} style={{ background: "#eef6ef", border: "1px solid #cfe1d2", color: "#2f6a49", borderRadius: 999, padding: "7px 14px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>+ ADD</button>
         </div>
-        <div style={{ overflowX: "auto", background: "#f0f1f3", borderRadius: 8, border: "1px solid #1e2128" }}>
+        <div style={tableShell}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #1e2128" }}>
+              <tr style={{ borderBottom: "1px solid #e6dccd", background: "rgba(255,251,245,0.88)" }}>
                 {["TICKER","P/C","STRIKE","EXP","UNITS","FILL","BASIS","EQ ENTRY","EQ LAST","G/L $","G/L %","SIZE","THESIS"].map(h => <th key={h} style={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
               {optRows.map(r => (
-                <tr key={r.id} style={{ borderBottom: "1px solid #0f1117" }}>
+                <tr key={r.id} style={{ borderBottom: "1px solid #eee5d8" }}>
                   <td style={{ ...td, color: "#0d0f14", fontWeight: 600 }}>{r.ticker}</td>
                   <td style={{ ...td, color: r.pc === "C" ? "#16a34a" : "#dc2626" }}>{r.pc}</td>
                   <td style={{ ...td, color: "#2a2f3c" }}>${r.strike}</td>
@@ -672,7 +674,7 @@ function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntr
           const e = item as Record<string, string>;
           const displayDate = String(e.date || new Date(item.id).toISOString().slice(0, 10));
           return (
-            <div key={item.id} style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: "16px 20px" }}>
+            <div key={item.id} style={{ background: "rgba(255,250,244,0.82)", border: "1px solid #ddd1bf", borderRadius: 18, padding: "18px 22px", boxShadow: "0 12px 28px rgba(73,54,29,0.04)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <div onClick={() => useComposer && view(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, cursor: useComposer ? "pointer" : "default" }}>
                   {(type === "thesis" || type === "tradeIdeas" || type === "sellSideResearch") && e.ticker && (
@@ -1072,7 +1074,7 @@ function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSav
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20, alignItems: "start" }}>
-      <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: 16 }}>
+      <div style={{ ...softPanel, padding: 18 }}>
         <div style={{ fontSize: 10, color: "#a07828", letterSpacing: 2, marginBottom: 12 }}>FOLDERS</div>
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           <input style={iStyle} value={newFolder} onChange={e => setNewFolder(e.target.value)} placeholder="2026-04-17 or Semis Week" />
@@ -1082,14 +1084,14 @@ function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSav
           {items.length === 0 && <div style={{ color: "#5a6070", fontSize: 11 }}>Create a folder to start organizing PDFs.</div>}
           {items.map(folder => (
             <div key={folder.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <button onClick={() => setSelectedId(folder.id)} style={{ flex: 1, textAlign: "left", background: selectedId === folder.id ? "#e2e4e8" : "transparent", border: "1px solid #1e2128", color: selectedId === folder.id ? "#0d0f14" : "#3a3f4c", borderRadius: 6, padding: "10px 12px", cursor: "pointer", fontSize: 11 }}>{folder.name}</button>
+              <button onClick={() => setSelectedId(folder.id)} style={{ flex: 1, textAlign: "left", background: selectedId === folder.id ? "#f4ebdd" : "transparent", border: "1px solid #ddd1bf", color: selectedId === folder.id ? "#20302f" : "#6f756f", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 11 }}>{folder.name}</button>
               <button onClick={() => deleteFolder(folder.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>×</button>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ background: "#f0f1f3", border: "1px solid #1e2128", borderRadius: 8, padding: 20 }}>
+      <div style={{ ...softPanel, padding: 22 }}>
         {!selectedFolder && <div style={{ color: "#5a6070", fontSize: 12 }}>Pick or create a folder, then upload PDFs into it.</div>}
         {selectedFolder && (
           <>
@@ -1107,7 +1109,7 @@ function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSav
               {files.map(file => {
                 const name = file.pathname.split("/").pop() || file.pathname;
                 return (
-                  <div key={file.url} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid #1e2128", borderRadius: 8, background: "#e2e4e8" }}>
+                  <div key={file.url} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", border: "1px solid #ddd1bf", borderRadius: 14, background: "rgba(255,250,244,0.94)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <a href={file.url} target="_blank" rel="noreferrer" style={{ color: "#0d0f14", textDecoration: "none", fontSize: 12, fontWeight: 600 }}>{name}</a>
                       <div style={{ color: "#5a6070", fontSize: 10, marginTop: 4 }}>{fmtFileSize(file.size)}{file.uploadedAt ? ` · ${new Date(file.uploadedAt).toLocaleString()}` : ""}</div>

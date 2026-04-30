@@ -58,6 +58,8 @@ export function glColor(n: number | null | undefined): string {
 
 const iStyle: React.CSSProperties = { width: "100%", background: "#d4d6db", border: "1px solid #2a2d35", borderRadius: 6, padding: "8px 10px", color: "#0d0f14", fontSize: 12, outline: "none", fontFamily: "'DM Mono', monospace" };
 const taStyle: React.CSSProperties = { ...iStyle, height: 72, resize: "vertical" as const };
+const tableShell: React.CSSProperties = { overflowX: "auto", background: "rgba(255,250,244,0.82)", borderRadius: 18, border: "1px solid #ddd1bf", boxShadow: "0 14px 34px rgba(73,54,29,0.05)" };
+const pillGroup: React.CSSProperties = { display: "flex", gap: 4, background: "rgba(255,250,244,0.88)", borderRadius: 999, border: "1px solid #ddd1bf", padding: 4 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div style={{ marginBottom: 12, flex: 1, minWidth: 0 }}><label style={{ display: "block", fontSize: 10, color: "#3a3f4c", letterSpacing: 1.5, marginBottom: 5, textTransform: "uppercase" as const }}>{label}</label>{children}</div>;
@@ -158,27 +160,27 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
     return true;
   });
 
-  const th: React.CSSProperties = { padding: "7px 12px", color: "#4a5060", fontWeight: 400, textAlign: "left" as const, fontSize: 10, letterSpacing: 1, whiteSpace: "nowrap" as const };
-  const td: React.CSSProperties = { padding: "9px 12px", fontSize: 12, whiteSpace: "nowrap" as const, fontFamily: "'DM Mono', monospace" };
+  const th: React.CSSProperties = { padding: "12px 14px", color: "#7b7466", fontWeight: 500, textAlign: "left" as const, fontSize: 10, letterSpacing: 1.3, whiteSpace: "nowrap" as const };
+  const td: React.CSSProperties = { padding: "14px 14px", fontSize: 12, whiteSpace: "nowrap" as const, fontFamily: "'DM Mono', monospace" };
 
   return (
     <div>
       <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "center", flexWrap: "wrap" as const }}>
-        <button onClick={() => { setForm(BLANK); setEditing(null); setStrategyStep(false); setOpen(true); }} style={{ background: "#a07828", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "7px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>+ NEW TRADE</button>
-        <div style={{ display: "flex", gap: 2, background: "#e2e4e8", borderRadius: 6, border: "1px solid #1e2128", padding: 3 }}>
-          {(["All","Open","Closed"] as const).map(f => <button key={f} onClick={() => setFilter(f)} style={{ background: filter === f ? "#c4c7ce" : "none", border: "none", color: filter === f ? "#0d0f14" : "#4a5060", borderRadius: 4, padding: "5px 12px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>{f.toUpperCase()}</button>)}
+        <button onClick={() => { setForm(BLANK); setEditing(null); setStrategyStep(false); setOpen(true); }} style={{ background: "#9a6a28", color: "#fffaf2", border: "none", borderRadius: 999, padding: "9px 18px", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>+ NEW TRADE</button>
+        <div style={pillGroup}>
+          {(["All","Open","Closed"] as const).map(f => <button key={f} onClick={() => setFilter(f)} style={{ background: filter === f ? "#f4ebdd" : "none", border: "none", color: filter === f ? "#20302f" : "#6f756f", borderRadius: 999, padding: "6px 12px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>{f.toUpperCase()}</button>)}
         </div>
-        <div style={{ display: "flex", gap: 2, background: "#e2e4e8", borderRadius: 6, border: "1px solid #1e2128", padding: 3 }}>
-          <button onClick={() => setClassFilter("All")} style={{ background: classFilter === "All" ? "#c4c7ce" : "none", border: "none", color: classFilter === "All" ? "#0d0f14" : "#4a5060", borderRadius: 4, padding: "5px 10px", fontSize: 10, cursor: "pointer" }}>ALL</button>
-          <button onClick={() => setClassFilter("Strategy")} style={{ background: classFilter === "Strategy" ? "#c4c7ce" : "none", border: "none", color: classFilter === "Strategy" ? "#a21caf" : "#4a5060", borderRadius: 4, padding: "5px 10px", fontSize: 10, cursor: "pointer" }}>STRATEGY</button>
-          {ASSET_CLASSES.map(ac => <button key={ac} onClick={() => setClassFilter(ac)} style={{ background: classFilter === ac ? "#c4c7ce" : "none", border: "none", color: classFilter === ac ? ASSET_COLOR[ac] : "#4a5060", borderRadius: 4, padding: "5px 8px", fontSize: 10, cursor: "pointer" }}>{ac.toUpperCase()}</button>)}
+        <div style={pillGroup}>
+          <button onClick={() => setClassFilter("All")} style={{ background: classFilter === "All" ? "#f4ebdd" : "none", border: "none", color: classFilter === "All" ? "#20302f" : "#6f756f", borderRadius: 999, padding: "6px 10px", fontSize: 10, cursor: "pointer" }}>ALL</button>
+          <button onClick={() => setClassFilter("Strategy")} style={{ background: classFilter === "Strategy" ? "#f4ebdd" : "none", border: "none", color: classFilter === "Strategy" ? "#8a3ea8" : "#6f756f", borderRadius: 999, padding: "6px 10px", fontSize: 10, cursor: "pointer" }}>STRATEGY</button>
+          {ASSET_CLASSES.map(ac => <button key={ac} onClick={() => setClassFilter(ac)} style={{ background: classFilter === ac ? "#f4ebdd" : "none", border: "none", color: classFilter === ac ? ASSET_COLOR[ac] : "#6f756f", borderRadius: 999, padding: "6px 8px", fontSize: 10, cursor: "pointer" }}>{ac.toUpperCase()}</button>)}
         </div>
         <span style={{ fontSize: 11, color: "#5a6070", marginLeft: "auto" }}>{filtered.length} trade{filtered.length !== 1 ? "s" : ""}</span>
       </div>
 
-      <div style={{ overflowX: "auto", background: "#f0f1f3", borderRadius: 8, border: "1px solid #1e2128" }}>
+      <div style={tableShell}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ borderBottom: "1px solid #1e2128" }}>
+          <thead><tr style={{ borderBottom: "1px solid #e6dccd", background: "rgba(255,251,245,0.88)" }}>
             {["STATUS","TYPE","TICKER","DESCRIPTION","DIR","SIZE","ENTRY / NET PREM","MAX PROFIT","MAX LOSS","ENTRY DATE","EXIT DATE","G/L $",""].map(h => <th key={h} style={th}>{h}</th>)}
           </tr></thead>
           <tbody>
@@ -186,7 +188,7 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
             {filtered.map(t => {
               const gl = t.status === "Closed" ? t.glDollar : null;
               const isStrat = t.isStrategy;
-              return <tr key={t.id} style={{ borderBottom: "1px solid #0f1117" }}>
+              return <tr key={t.id} style={{ borderBottom: "1px solid #eee5d8" }}>
                 <td style={td}><span style={{ fontSize: 10, color: t.status === "Open" ? "#16a34a" : "#3a3f4c", border: `1px solid ${t.status === "Open" ? "#16a34a40" : "#b0b3bc60"}`, borderRadius: 3, padding: "2px 7px" }}>{t.status.toUpperCase()}</span></td>
                 <td style={td}>{isStrat ? <span style={{ fontSize: 10, color: "#a21caf" }}>{t.strategyType?.toUpperCase()}</span> : <span style={{ fontSize: 10, color: ASSET_COLOR[t.assetClass] }}>{t.assetClass.toUpperCase()}</span>}</td>
                 <td style={{ ...td, color: "#0d0f14", fontWeight: 600 }}>{t.ticker}</td>
@@ -200,8 +202,8 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
                 <td style={{ ...td, color: "#3a3f4c" }}>{t.exitDate || "—"}</td>
                 <td style={{ ...td, color: glColor(gl), fontWeight: 600 }}>{t.status === "Open" ? <span style={{ color: "#5a6070", fontSize: 10 }}>open</span> : fmt$(gl)}</td>
                 <td style={td}><div style={{ display: "flex", gap: 6 }}>
-                  {t.status === "Open" && <button onClick={() => { setClosingId(t.id); setCloseGL(""); setCloseDate(new Date().toISOString().slice(0, 10)); }} style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 4, padding: "3px 8px", fontSize: 10, cursor: "pointer" }}>CLOSE</button>}
-                  <button onClick={() => editTrade(t)} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 8px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
+                  {t.status === "Open" && <button onClick={() => { setClosingId(t.id); setCloseGL(""); setCloseDate(new Date().toISOString().slice(0, 10)); }} style={{ background: "#eef6ef", border: "1px solid #cfe1d2", color: "#2f6a49", borderRadius: 999, padding: "4px 9px", fontSize: 10, cursor: "pointer" }}>CLOSE</button>}
+                  <button onClick={() => editTrade(t)} style={{ background: "rgba(255,250,244,0.88)", border: "1px solid #ddd1bf", color: "#6f756f", borderRadius: 999, padding: "4px 9px", fontSize: 10, cursor: "pointer" }}>EDIT</button>
                   <button onClick={() => onChange({ ...data, blotter: blotter.filter(x => x.id !== t.id) })} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div></td>
               </tr>;
