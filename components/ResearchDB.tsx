@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import BlotterTab from "./BlotterTab";
 import AnalyticsTab from "./AnalyticsTab";
 import JournalTab from "./JournalTab";
@@ -463,7 +463,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
             <Field label="L/S"><select style={selStyle} value={eqF.ls} onChange={e => setEqF(p => ({ ...p, ls: e.target.value }))}><option>L</option><option>S</option></select></Field>
           </div>
           <Field label="Thesis Attachment">
-            <input style={iStyle} value={eqF.thesis} onChange={e => setEqF(p => ({ ...p, thesis: e.target.value }))} placeholder="URL auto-fills after upload" />
+            <input style={iStyle} value={eqF.thesis} onChange={e => setEqF(p => ({ ...p, thesis: e.target.value }))} placeholder="Upload file below or paste stored file URL" />
             <BlobUploadControl folder="positions/equity-thesis" onChange={value => setEqF(p => ({ ...p, thesis: value }))} value={eqF.thesis} />
           </Field>
           <SaveBtn onClick={saveEq} label="ADD POSITION" />
@@ -486,7 +486,7 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
             <Field label="Contracts"><input style={iStyle} type="number" value={optF.units} onChange={e => setOptF(p => ({ ...p, units: e.target.value }))} /></Field>
           </div>
           <Field label="Thesis Attachment">
-            <input style={iStyle} value={optF.thesis} onChange={e => setOptF(p => ({ ...p, thesis: e.target.value }))} placeholder="URL auto-fills after upload" />
+            <input style={iStyle} value={optF.thesis} onChange={e => setOptF(p => ({ ...p, thesis: e.target.value }))} placeholder="Upload file below or paste stored file URL" />
             <BlobUploadControl folder="positions/options-thesis" onChange={value => setOptF(p => ({ ...p, thesis: value }))} value={optF.thesis} />
           </Field>
           <SaveBtn onClick={saveOpt} label="ADD POSITION" />
@@ -500,42 +500,105 @@ function PositionsTab({ data, onChange }: { data: DBData; onChange: (d: DBData) 
 
 type ResearchType = "tradeIdeas" | "thesis" | "macro" | "marketUpdates" | "sellSideResearch";
 
-function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType }) {
+const RESEARCH_TYPE_LABEL: Record<ResearchType, string> = {
+  tradeIdeas: "Trade Idea",
+  thesis: "Investment Idea",
+  macro: "Macro",
+  marketUpdates: "Market Update",
+  sellSideResearch: "Sell-Side",
+};
+
+function displayEntryDate(entry: ResearchEntry) {
+  const record = entry as Record<string, string>;
+  return String(record.date || new Date(entry.id).toISOString().slice(0, 10));
+}
+
+function displayEntryStatus(entry: ResearchEntry) {
+  const record = entry as Record<string, string>;
+  return String(record.status || "Draft");
+}
+
+function normalizedSearchText(parts: unknown[]) {
+  return parts.filter(Boolean).join(" ").toLowerCase();
+}
+
+function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType; contextData: DBData }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [viewing, setViewing] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Draft" | "Published">("All");
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const useComposer = type !== "sellSideResearch";
 
   const blank: Record<string, string> = type === "thesis"
-    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", materials: "", models: "" }
+    ? { ticker: "", title: "", subtitle: "", date: new Date().toISOString().slice(0, 10), conviction: "High", summary: "", tags: "", materials: "", models: "", status: "Draft" }
     : type === "tradeIdeas"
-    ? { ticker: "", title: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "" }
+    ? { ticker: "", title: "", subtitle: "", date: new Date().toISOString().slice(0, 10), direction: "Long", term: "ST", thesis: "", entry: "", target: "", stop: "", links: "", tags: "", status: "Draft" }
     : type === "sellSideResearch"
     ? { ticker: "", firm: "", analyst: "", title: "", date: new Date().toISOString().slice(0, 10), rating: "", notes: "", links: "" }
-    : { title: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "" };
+    : { title: "", subtitle: "", date: new Date().toISOString().slice(0, 10), tags: "", body: "", links: "", status: "Draft" };
 
   const [form, setForm] = useState<Record<string, string>>(blank);
 
+  const draftStorageKey = useMemo(
+    () => `hp:draft:${type}:${editing ?? "new"}`,
+    [type, editing]
+  );
+
+  useEffect(() => {
+    if (!open || !useComposer) return;
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(form));
+      setDraftSavedAt(new Date());
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [draftStorageKey, form, open, useComposer]);
+
   function save() {
-    const nextForm = { ...form, date: form.date || new Date().toISOString().slice(0, 10) };
+    const nextForm = {
+      ...form,
+      date: form.date || new Date().toISOString().slice(0, 10),
+      status: form.status || "Draft",
+      updatedAt: new Date().toISOString(),
+    };
     if (editing !== null) {
       onSave(items.map(x => x.id === editing ? { ...nextForm, id: x.id } : x));
       setEditing(null);
     } else {
       onSave([{ ...nextForm, id: Date.now() }, ...items]);
     }
+    window.localStorage.removeItem(draftStorageKey);
     setForm(blank);
+    setDraftSavedAt(null);
     setOpen(false);
   }
 
   function edit(id: number) {
     const item = items.find(x => x.id === id);
     if (!item) return;
-    setForm({ ...blank, ...(item as Record<string, string>), date: String((item as Record<string, string>).date || new Date(item.id).toISOString().slice(0, 10)) });
+    const storedDraft = useComposer ? window.localStorage.getItem(`hp:draft:${type}:${id}`) : null;
+    const parsedDraft = storedDraft ? JSON.parse(storedDraft) as Record<string, string> : null;
+    setForm({ ...blank, ...(item as Record<string, string>), ...parsedDraft, date: String((item as Record<string, string>).date || new Date(item.id).toISOString().slice(0, 10)) });
     setEditing(id);
     setViewing(null);
+    setDraftSavedAt(null);
     setOpen(true);
+  }
+  function createNewEntry() {
+    const storedDraft = useComposer ? window.localStorage.getItem(`hp:draft:${type}:new`) : null;
+    const parsedDraft = storedDraft ? JSON.parse(storedDraft) as Record<string, string> : null;
+    setForm(parsedDraft ? { ...blank, ...parsedDraft } : blank);
+    setEditing(null);
+    setViewing(null);
+    setDraftSavedAt(null);
+    setOpen(true);
+  }
+  function duplicate(id: number) {
+    const item = items.find(x => x.id === id);
+    if (!item) return;
+    const copy = { ...(item as Record<string, string>), id: Date.now(), title: `${String((item as Record<string, string>).title || "Untitled")} Copy`, status: "Draft", updatedAt: new Date().toISOString() };
+    onSave([copy, ...items]);
   }
   function remove(id: number) {
     if (viewing === id) setViewing(null);
@@ -544,25 +607,55 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
   function view(id: number) { setViewing(id); }
 
   const convColor: Record<string, string> = { High: "#16a34a", Medium: "#a07828", Low: "#dc2626" };
-  const sortedItems = [...items].sort((a, b) => String((b as Record<string, string>).date || "").localeCompare(String((a as Record<string, string>).date || "")));
+  const sortedItems = [...items].sort((a, b) => String((b as Record<string, string>).updatedAt || (b as Record<string, string>).date || "").localeCompare(String((a as Record<string, string>).updatedAt || (a as Record<string, string>).date || "")));
   const filteredItems = sortedItems.filter(item => {
+    if (statusFilter !== "All" && displayEntryStatus(item) !== statusFilter) return false;
     if (!query.trim()) return true;
     const e = item as Record<string, string>;
-    const haystack = [e.ticker, e.title, e.summary, e.thesis, e.body, e.tags, e.links, e.materials, e.models, e.entry, e.target, e.stop]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    const haystack = normalizedSearchText([e.ticker, e.title, e.subtitle, e.summary, e.thesis, e.body, e.tags, e.links, e.materials, e.models, e.entry, e.target, e.stop, e.firm, e.analyst, e.rating]);
     return haystack.includes(query.trim().toLowerCase());
   });
   const viewingItem = viewing !== null ? items.find(x => x.id === viewing) : null;
+  const viewingTicker = String((viewingItem as Record<string, string> | null)?.ticker || "").trim().toUpperCase();
+  const relatedTrades = viewingTicker ? (contextData.blotter ?? []).filter(trade => trade.ticker?.toUpperCase() === viewingTicker) : [];
+  const relatedResearch = viewingTicker
+    ? [
+        ...contextData.tradeIdeas.map(entry => ({ source: "tradeIdeas", section: "Trade Ideas", entry })),
+        ...contextData.thesis.map(entry => ({ source: "thesis", section: "Investment Ideas", entry })),
+        ...contextData.macro.map(entry => ({ source: "macro", section: "Macro", entry })),
+        ...contextData.marketUpdates.map(entry => ({ source: "marketUpdates", section: "Market Updates", entry })),
+      ].filter(({ source, entry }) => source !== type && String((entry as Record<string, string>).ticker || "").toUpperCase() === viewingTicker)
+    : [];
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16 }}>
         {useComposer ? (
-          <input style={{ ...iStyle, maxWidth: 360 }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search entries..." />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" as const }}>
+            <input style={{ ...iStyle, maxWidth: 360 }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search entries..." />
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["All", "Draft", "Published"] as const).map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setStatusFilter(option)}
+                  style={{
+                    background: statusFilter === option ? "rgba(51,92,87,0.12)" : "transparent",
+                    border: "1px solid #d7c8b3",
+                    color: statusFilter === option ? "#274844" : "#74684f",
+                    borderRadius: 999,
+                    padding: "8px 12px",
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : <div />}
-        <button onClick={() => { setForm(blank); setEditing(null); setViewing(null); setOpen(true); }}
+        <button onClick={createNewEntry}
           style={{ background: "#dcf0dc", border: "1px solid #2a4a2a", color: "#16a34a", borderRadius: 5, padding: "6px 18px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>
           + NEW ENTRY
         </button>
@@ -584,6 +677,11 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                     <span style={{ fontSize: 15, color: "#0d0f14", fontWeight: 600 }}>{e.ticker}</span>
                   )}
                   {e.title && <span style={{ fontSize: 13, color: "#2a2f3c" }}>{e.title}</span>}
+                  {useComposer && displayEntryStatus(item) && (
+                    <span style={{ fontSize: 10, color: displayEntryStatus(item) === "Published" ? "#1f7a37" : "#8d6721", border: `1px solid ${displayEntryStatus(item) === "Published" ? "#9ed8ae" : "#d8cab5"}`, borderRadius: 999, padding: "2px 8px" }}>
+                      {displayEntryStatus(item)}
+                    </span>
+                  )}
                   {type === "thesis" && e.conviction && (
                     <span style={{ fontSize: 10, color: convColor[e.conviction], border: `1px solid ${convColor[e.conviction]}40`, borderRadius: 3, padding: "2px 7px" }}>{e.conviction}</span>
                   )}
@@ -605,15 +703,16 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
                   {useComposer && <button onClick={() => view(item.id)} style={{ background: "none", border: "1px solid #c9c0b0", color: "#6b7280", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>VIEW</button>}
+                  {useComposer && <button onClick={() => duplicate(item.id)} style={{ background: "none", border: "1px solid #d7c8b3", color: "#7f776d", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>DUPLICATE</button>}
                   <button onClick={() => edit(item.id)} style={{ background: "none", border: "1px solid #2a2d35", color: "#3a3f4c", borderRadius: 4, padding: "3px 10px", fontSize: 10, cursor: "pointer", letterSpacing: 1 }}>EDIT</button>
                   <button onClick={() => remove(item.id)} style={{ background: "none", border: "none", color: "#5a6070", cursor: "pointer", fontSize: 15 }}>✕</button>
                 </div>
               </div>
 
-              {(type === "thesis" || type === "macro" || type === "marketUpdates") && e.tags && (
+              {(type === "thesis" || type === "tradeIdeas" || type === "macro" || type === "marketUpdates") && e.tags && (
                 <div style={{ marginBottom: 8, display: "flex", flexWrap: "wrap" as const, gap: 4 }}>
                   {e.tags.split(",").map(t => t.trim()).filter(Boolean).map(t => (
-                    <span key={t} style={{ fontSize: 10, color: "#a07828", background: "#a0782810", border: "1px solid #c9a84c25", borderRadius: 3, padding: "2px 7px" }}>{t}</span>
+                    <button key={t} type="button" onClick={() => setQuery(t)} style={{ fontSize: 10, color: "#a07828", background: "#a0782810", border: "1px solid #c9a84c25", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>{t}</button>
                   ))}
                 </div>
               )}
@@ -664,13 +763,17 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
         <ComposerShell
           onBack={() => { setOpen(false); setEditing(null); }}
           onSave={save}
-          saveLabel={editing !== null ? "SAVE ENTRY" : "PUBLISH ENTRY"}
+          saveLabel={form.status === "Published" ? (editing !== null ? "SAVE PUBLISHED ENTRY" : "PUBLISH ENTRY") : "SAVE DRAFT"}
           title={editing !== null ? "EDIT ENTRY" : "NEW ENTRY"}
         >
           <div style={{ background: "#efebe2", border: "1px solid #ddd6c7", borderRadius: 14, padding: 18, position: "sticky", top: 86 }}>
+            <div style={{ fontSize: 11, color: "#7f776d", marginBottom: 14 }}>
+              {draftSavedAt ? `Draft autosaved ${draftSavedAt.toLocaleTimeString()}` : "Autosave enabled for this draft"}
+            </div>
             {type === "thesis" && <>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+              <Field label="Status"><select style={selStyle} value={form.status || "Draft"} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}><option>Draft</option><option>Published</option></select></Field>
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
               <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="ai, earnings, semis" /></Field>
               <Field label="Financial Models">
@@ -685,8 +788,10 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             {type === "tradeIdeas" && <>
               <Field label="Ticker"><input style={iStyle} value={form.ticker || ""} onChange={e => setForm(p => ({ ...p, ticker: e.target.value }))} /></Field>
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+              <Field label="Status"><select style={selStyle} value={form.status || "Draft"} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}><option>Draft</option><option>Published</option></select></Field>
               <Field label="Direction"><select style={selStyle} value={form.direction || "Long"} onChange={e => setForm(p => ({ ...p, direction: e.target.value }))}><option>Long</option><option>Short</option></select></Field>
               <Field label="Term"><select style={selStyle} value={form.term || "ST"} onChange={e => setForm(p => ({ ...p, term: e.target.value }))}><option>ST</option><option>MT</option><option>LT</option></select></Field>
+              <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="earnings, technicals, flow" /></Field>
               <Field label="Entry"><input style={iStyle} value={form.entry || ""} onChange={e => setForm(p => ({ ...p, entry: e.target.value }))} /></Field>
               <Field label="Target"><input style={iStyle} value={form.target || ""} onChange={e => setForm(p => ({ ...p, target: e.target.value }))} /></Field>
               <Field label="Stop"><input style={iStyle} value={form.stop || ""} onChange={e => setForm(p => ({ ...p, stop: e.target.value }))} /></Field>
@@ -697,6 +802,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
             </>}
             {(type === "macro" || type === "marketUpdates") && <>
               <Field label="Date"><input style={iStyle} type="date" value={form.date || ""} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></Field>
+              <Field label="Status"><select style={selStyle} value={form.status || "Draft"} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}><option>Draft</option><option>Published</option></select></Field>
               <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="rates, china, equities" /></Field>
               <Field label="Supporting Files">
                 <BlobUploadControl accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.webp,.zip,.csv,application/pdf,text/plain,text/csv" buttonLabel="UPLOAD FILES" folder={`research/${type}-files`} multiple onChange={value => setForm(p => ({ ...p, links: value }))} value={form.links || ""} />
@@ -710,6 +816,12 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               value={form.title || ""}
               onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
               placeholder="Title"
+            />
+            <input
+              style={{ width: "100%", border: "none", background: "transparent", color: "#7b8794", fontFamily: "'Lora', serif", fontSize: 24, lineHeight: 1.35, outline: "none", marginBottom: 18 }}
+              value={form.subtitle || ""}
+              onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))}
+              placeholder="Add a subtitle..."
             />
             <div style={{ color: "#7b8794", fontFamily: "'Lora', serif", fontSize: 22, lineHeight: 1.3, marginBottom: 24 }}>
               {type === "tradeIdeas" && `${form.ticker || "Ticker"} · ${form.direction || "Long"} · ${form.term || "ST"}`}
@@ -737,12 +849,17 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
           <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 760, margin: "0 auto", padding: "18px 0 64px" }}>
               <div style={{ fontSize: 12, color: "#a07828", letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 18 }}>
-                {type === "thesis" ? "Investment Ideas" : type === "tradeIdeas" ? "Trade Idea" : type === "macro" ? "Macro" : "Market Update"}
+                {RESEARCH_TYPE_LABEL[type]}
               </div>
 
               <div style={{ color: "#2f4368", fontFamily: "'Lora', serif", fontSize: 50, lineHeight: 1.08, marginBottom: 14 }}>
                 {String((viewingItem as Record<string, string>).title || "Untitled")}
               </div>
+              {!!(viewingItem as Record<string, string>).subtitle && (
+                <div style={{ color: "#6f7b88", fontFamily: "'Lora', serif", fontSize: 24, lineHeight: 1.45, marginBottom: 18 }}>
+                  {String((viewingItem as Record<string, string>).subtitle || "")}
+                </div>
+              )}
 
               <div style={{ color: "#6f7b88", fontFamily: "'Lora', serif", fontSize: 21, lineHeight: 1.45, marginBottom: 20 }}>
                 {type === "tradeIdeas" && `${String((viewingItem as Record<string, string>).ticker || "Ticker")} · ${String((viewingItem as Record<string, string>).direction || "Long")} · ${String((viewingItem as Record<string, string>).term || "ST")}`}
@@ -752,6 +869,9 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", color: "#7f8896", fontSize: 12, marginBottom: 26, paddingBottom: 18, borderBottom: "1px solid #e3dbce" }}>
                 <span>{String((viewingItem as Record<string, string>).date || new Date(viewingItem.id).toISOString().slice(0, 10))}</span>
+                <span style={{ padding: "4px 10px", borderRadius: 999, background: displayEntryStatus(viewingItem) === "Published" ? "#e7f5ea" : "#efe6d7", color: displayEntryStatus(viewingItem) === "Published" ? "#1f7a37" : "#8d6721" }}>
+                  {displayEntryStatus(viewingItem)}
+                </span>
                 {(viewingItem as Record<string, string>).tags && (
                   <span style={{ padding: "4px 10px", borderRadius: 999, background: "#efe6d7", color: "#8d6721" }}>
                     {String((viewingItem as Record<string, string>).tags)}
@@ -790,11 +910,8 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
 
               {!!(viewingItem as Record<string, string>).links && (
                 <div style={{ marginTop: 34, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
-                  {String((viewingItem as Record<string, string>).links || "").split("\n").filter(Boolean).map((l, j) => (
-                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ color: "#9a6d18", fontSize: 13, textDecoration: "none" }}>
-                      {l}
-                    </a>
-                  ))}
+                  <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Supporting Files</div>
+                  <StoredFileList value={String((viewingItem as Record<string, string>).links || "")} accent="#9a6d18" />
                 </div>
               )}
               {!!(viewingItem as Record<string, string>).models && (
@@ -807,6 +924,27 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
                 <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Supplementary Materials</div>
                   <StoredFileList value={String((viewingItem as Record<string, string>).materials || "")} accent="#9a6d18" />
+                </div>
+              )}
+              {(relatedTrades.length > 0 || relatedResearch.length > 0) && (
+                <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid #e3dbce" }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d", marginBottom: 12 }}>Related Activity</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {relatedTrades.map(trade => (
+                      <div key={`trade-${trade.id}`} style={{ padding: "12px 14px", borderRadius: 12, background: "#f6f0e5", border: "1px solid #e3dbce" }}>
+                        <div style={{ fontSize: 11, color: "#8d6721", letterSpacing: 1.2, marginBottom: 4 }}>BLOTTER</div>
+                        <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{trade.ticker} · {trade.description || trade.assetClass}</div>
+                        <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{trade.status} · {trade.entryDate || "No date"}</div>
+                      </div>
+                    ))}
+                    {relatedResearch.map(({ section, entry }) => (
+                      <div key={`${section}-${entry.id}`} style={{ padding: "12px 14px", borderRadius: 12, background: "#f8f5ee", border: "1px solid #e3dbce" }}>
+                        <div style={{ fontSize: 11, color: "#32536f", letterSpacing: 1.2, marginBottom: 4 }}>{section.toUpperCase()}</div>
+                        <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{String((entry as Record<string, string>).title || "Untitled")}</div>
+                        <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{displayEntryDate(entry)}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1011,6 +1149,7 @@ export default function ResearchDB() {
   const [data, setData] = useState<DBData | null>(null);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [globalQuery, setGlobalQuery] = useState("");
 
   // Load on mount
   useEffect(() => {
@@ -1030,6 +1169,102 @@ export default function ResearchDB() {
   }, [data]);
 
   const update = useCallback((d: DBData) => setData(d), []);
+
+  const dashboardStats = useMemo(() => {
+    if (!data) return [];
+    return [
+      { label: "Open Trades", value: String((data.blotter ?? []).filter(t => t.status === "Open").length), tone: "#32536f" },
+      { label: "Published Notes", value: String([...data.tradeIdeas, ...data.thesis, ...data.macro, ...data.marketUpdates].filter(entry => displayEntryStatus(entry) === "Published").length), tone: "#1f7a37" },
+      { label: "Drafts", value: String([...data.tradeIdeas, ...data.thesis, ...data.macro, ...data.marketUpdates].filter(entry => displayEntryStatus(entry) !== "Published").length), tone: "#8d6721" },
+      { label: "Sell-Side Folders", value: String((data.sellSideResearch ?? []).filter(folder => (folder as Record<string, unknown>).name).length), tone: "#7c3aed" },
+    ];
+  }, [data]);
+
+  const globalResults = useMemo(() => {
+    if (!data || !globalQuery.trim()) return [];
+    const q = globalQuery.trim().toLowerCase();
+    const researchSections: Array<{ key: ResearchTabKey; label: string; items: ResearchEntry[] }> = [
+      { key: "thesis", label: "Investment Ideas", items: data.thesis },
+      { key: "sellSide", label: "Sell-Side", items: data.sellSideResearch },
+      { key: "macro", label: "Macro", items: data.macro },
+      { key: "marketUpdates", label: "Market Updates", items: data.marketUpdates },
+    ];
+    const researchHits = researchSections.flatMap(section =>
+      section.items
+        .filter(item => normalizedSearchText(Object.values(item as Record<string, unknown>)).includes(q))
+        .slice(0, 5)
+        .map(item => ({
+          kind: "research" as const,
+          label: section.label,
+          title: String((item as Record<string, string>).title || (item as Record<string, string>).ticker || "Untitled"),
+          meta: String((item as Record<string, string>).subtitle || (item as Record<string, string>).date || ""),
+          action: () => {
+            setPrimaryTab("research");
+            setResearchTab(section.key);
+            setGlobalQuery("");
+          },
+        }))
+    );
+    const tradingHits = [
+      ...(data.equityPositions ?? [])
+        .filter(item => normalizedSearchText(Object.values(item as Record<string, unknown>)).includes(q))
+        .slice(0, 4)
+        .map(item => ({
+          kind: "trading" as const,
+          label: "Positions",
+          title: `${item.ticker} · Equity Position`,
+          meta: `${item.status} · ${item.term}`,
+          action: () => {
+            setPrimaryTab("trading");
+            setTradingTab("positions");
+            setGlobalQuery("");
+          },
+        })),
+      ...(data.optionsPositions ?? [])
+        .filter(item => normalizedSearchText(Object.values(item as Record<string, unknown>)).includes(q))
+        .slice(0, 4)
+        .map(item => ({
+          kind: "trading" as const,
+          label: "Positions",
+          title: `${item.ticker} · Option Position`,
+          meta: `${item.status} · ${item.term}`,
+          action: () => {
+            setPrimaryTab("trading");
+            setTradingTab("positions");
+            setGlobalQuery("");
+          },
+        })),
+      ...data.tradeIdeas
+        .filter(item => normalizedSearchText(Object.values(item as Record<string, unknown>)).includes(q))
+        .slice(0, 5)
+        .map(item => ({
+          kind: "trading" as const,
+          label: "Trade Ideas",
+          title: String((item as Record<string, string>).title || (item as Record<string, string>).ticker || "Untitled"),
+          meta: String((item as Record<string, string>).subtitle || (item as Record<string, string>).date || ""),
+          action: () => {
+            setPrimaryTab("trading");
+            setTradingTab("tradeIdeas");
+            setGlobalQuery("");
+          },
+        })),
+      ...data.blotter
+        .filter(item => normalizedSearchText(Object.values(item as Record<string, unknown>)).includes(q))
+        .slice(0, 5)
+        .map(item => ({
+          kind: "trading" as const,
+          label: "Blotter",
+          title: `${item.ticker} ${item.description ? `· ${item.description}` : ""}`.trim(),
+          meta: `${item.status} · ${item.entryDate || ""}`,
+          action: () => {
+            setPrimaryTab("trading");
+            setTradingTab("blotter");
+            setGlobalQuery("");
+          },
+        })),
+    ];
+    return [...tradingHits, ...researchHits].slice(0, 10);
+  }, [data, globalQuery]);
 
   if (!data) {
     return (
@@ -1056,6 +1291,46 @@ export default function ResearchDB() {
             <div style={{ fontSize: 11, color: "#7f776d", marginTop: 4 }}>
               {primaryTab === "trading" ? "Portfolio, blotter, analytics, and review." : "Investment ideas, files, macro, and market notes."}
             </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 18, display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(320px, 1fr)", gap: 14, alignItems: "start" }}>
+          <div style={{ background: "rgba(255,250,242,0.82)", border: "1px solid #d8cab5", borderRadius: 18, padding: 16 }}>
+            <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 8 }}>Universal Search</div>
+            <input
+              style={{ ...iStyle, maxWidth: "100%" }}
+              value={globalQuery}
+              onChange={e => setGlobalQuery(e.target.value)}
+              placeholder="Search tickers, notes, tags, files, firms, and trades..."
+            />
+            {globalQuery.trim() && (
+              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                {globalResults.length === 0 && (
+                  <div style={{ fontSize: 12, color: "#7f776d", padding: "8px 2px" }}>No matches yet.</div>
+                )}
+                {globalResults.map((result, index) => (
+                  <button
+                    key={`${result.label}-${index}`}
+                    type="button"
+                    onClick={result.action}
+                    style={{ textAlign: "left", background: "#fffaf2", border: "1px solid #e3dbce", borderRadius: 12, padding: "12px 14px", cursor: "pointer" }}
+                  >
+                    <div style={{ fontSize: 10, letterSpacing: 1.4, color: result.kind === "trading" ? "#32536f" : "#8d6721", marginBottom: 4 }}>{result.label.toUpperCase()}</div>
+                    <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{result.title}</div>
+                    {!!result.meta && <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{result.meta}</div>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+            {dashboardStats.map(stat => (
+              <div key={stat.label} style={{ background: "rgba(255,250,242,0.78)", border: "1px solid #d8cab5", borderRadius: 18, padding: 16 }}>
+                <div style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d", marginBottom: 10 }}>{stat.label}</div>
+                <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 34, color: stat.tone, lineHeight: 1 }}>{stat.value}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1113,11 +1388,11 @@ export default function ResearchDB() {
         {primaryTab === "trading" && tradingTab === "blotter" && <BlotterTab data={data as any} onChange={update as any} />}
         {primaryTab === "trading" && tradingTab === "analytics" && <AnalyticsTab data={data as any} />}
         {primaryTab === "trading" && tradingTab === "journal" && <JournalTab data={data as any} onChange={update as any} />}
-        {primaryTab === "trading" && tradingTab === "tradeIdeas" && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
-        {primaryTab === "research" && researchTab === "thesis" && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
+        {primaryTab === "trading" && tradingTab === "tradeIdeas" && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" contextData={data} />}
+        {primaryTab === "research" && researchTab === "thesis" && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" contextData={data} />}
         {primaryTab === "research" && researchTab === "sellSide" && <SellSideFilesTab folders={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} />}
-        {primaryTab === "research" && researchTab === "macro" && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
-        {primaryTab === "research" && researchTab === "marketUpdates" && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+        {primaryTab === "research" && researchTab === "macro" && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" contextData={data} />}
+        {primaryTab === "research" && researchTab === "marketUpdates" && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" contextData={data} />}
           </div>
         </div>
     </div>

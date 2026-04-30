@@ -253,7 +253,7 @@ export default function BlotterTab({ data, onChange }: { data: DBData; onChange:
               {form.status === "Closed" && <div style={{ borderTop: "1px solid #1e2128", paddingTop: 12, marginTop: 4 }}><div style={{ fontSize: 10, color: "#3a3f4c", letterSpacing: 1.5, marginBottom: 10 }}>CLOSE</div><div style={{ display: "flex", gap: 10 }}><Field label="Exit Date"><input style={iStyle} type="date" value={form.exitDate ?? ""} onChange={e => set("exitDate", e.target.value)} /></Field><Field label="G/L $ (realized)"><input style={iStyle} type="number" step="any" value={form.glDollar ?? ""} onChange={e => set("glDollar", parseFloat(e.target.value))} placeholder="actual P&L" /></Field></div></div>}
               <Field label="Notes"><textarea style={taStyle} value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Setup, rationale, outcome..." /></Field>
               <Field label="Thesis Attachment">
-                <input style={iStyle} value={form.thesis} onChange={e => set("thesis", e.target.value)} placeholder="URL auto-fills after upload" />
+                <input style={iStyle} value={form.thesis} onChange={e => set("thesis", e.target.value)} placeholder="Upload file below or paste stored file URL" />
                 <BlobUploadControl folder="blotter-thesis" onChange={value => set("thesis", value)} value={form.thesis} />
               </Field>
               <button onClick={save} style={{ background: "#a07828", color: "#f0f1f3", border: "none", borderRadius: 6, padding: "9px 0", width: "100%", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 1, marginTop: 8 }}>{editing !== null ? "SAVE CHANGES" : "ADD TRADE"}</button>

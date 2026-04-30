@@ -108,6 +108,14 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
     await insertFiles(imageFiles);
   }
 
+  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    const files = Array.from(event.dataTransfer.files || []);
+    const mediaFiles = files.filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
+    if (!mediaFiles.length) return;
+    event.preventDefault();
+    await insertFiles(mediaFiles);
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center", padding: "10px 12px", background: "#f0f1f3", border: "1px solid #c4c7ce", borderRadius: 10 }}>
@@ -136,6 +144,12 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
         contentEditable
         data-placeholder={placeholder}
         onBlur={sync}
+        onDragOver={e => {
+          if (Array.from(e.dataTransfer.items).some(item => item.type.startsWith("image/") || item.type.startsWith("video/"))) {
+            e.preventDefault();
+          }
+        }}
+        onDrop={e => void handleDrop(e)}
         onInput={sync}
         onPaste={e => void handlePaste(e)}
         ref={editorRef}
