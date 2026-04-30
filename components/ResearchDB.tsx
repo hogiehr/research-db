@@ -92,6 +92,56 @@ function SaveBtn({ onClick, label = "SAVE" }: { onClick: () => void; label?: str
   );
 }
 
+function parseStoredUrls(value: string) {
+  return value
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
+function filenameFromUrl(url: string) {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split("/").pop() || url);
+  } catch {
+    return url;
+  }
+}
+
+function StoredFileList({
+  value,
+  accent = "#32536f",
+  onRemove,
+}: {
+  value: string;
+  accent?: string;
+  onRemove?: (url: string) => void;
+}) {
+  const files = parseStoredUrls(value);
+  if (files.length === 0) return <div style={{ fontSize: 11, color: "#7f776d" }}>No files stored yet.</div>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+      {files.map(url => (
+        <div key={url} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, border: "1px solid #d8cab5", background: "rgba(255,250,244,0.82)" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <a href={url} target="_blank" rel="noreferrer" style={{ color: accent, textDecoration: "none", fontSize: 12, fontWeight: 700, wordBreak: "break-word" }}>
+              {filenameFromUrl(url)}
+            </a>
+          </div>
+          <a href={url} target="_blank" rel="noreferrer" style={{ color: "#9a6d18", textDecoration: "none", fontSize: 10, letterSpacing: 1 }}>
+            OPEN
+          </a>
+          {onRemove && (
+            <button onClick={() => onRemove(url)} type="button" style={{ background: "none", border: "none", color: "#7f776d", cursor: "pointer", fontSize: 10, letterSpacing: 1 }}>
+              REMOVE
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function appendMarkdownImages(current: string, urls: string[]) {
   const imageBlock = urls.map(url => `![](${url})`).join("\n\n");
   if (!imageBlock) return current;
@@ -628,8 +678,8 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               <Field label="Conviction"><select style={selStyle} value={form.conviction || "High"} onChange={e => setForm(p => ({ ...p, conviction: e.target.value }))}><option>High</option><option>Medium</option><option>Low</option></select></Field>
               <Field label="Tags"><input style={iStyle} value={form.tags || ""} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="ai, earnings, semis" /></Field>
               <Field label="Financial Models">
-                <textarea style={{ ...taStyle, height: 70 }} value={form.models || ""} onChange={e => setForm(p => ({ ...p, models: e.target.value }))} placeholder="Model URLs auto-fill after upload" />
                 <BlobUploadControl accept=".xls,.xlsx,.csv,.pdf,.doc,.docx,.ppt,.pptx,.txt,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/pdf" buttonLabel="UPLOAD MODELS" folder="research/investment-ideas-models" multiple onChange={value => setForm(p => ({ ...p, models: value }))} value={form.models || ""} />
+                <StoredFileList value={form.models || ""} onRemove={url => setForm(p => ({ ...p, models: parseStoredUrls(p.models || "").filter(x => x !== url).join("\n") }))} />
               </Field>
               <Field label="Links"><textarea style={{ ...taStyle, height: 84 }} value={form.links || ""} onChange={e => setForm(p => ({ ...p, links: e.target.value }))} /></Field>
             </>}
@@ -740,11 +790,7 @@ function ResearchTab({ items, onSave, type }: { items: ResearchEntry[]; onSave: 
               {!!(viewingItem as Record<string, string>).models && (
                 <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #e3dbce", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: "#7f776d" }}>Financial Models</div>
-                  {String((viewingItem as Record<string, string>).models || "").split("\n").filter(Boolean).map((l, j) => (
-                    <a key={j} href={l} target="_blank" rel="noreferrer" style={{ color: "#32536f", fontSize: 13, textDecoration: "none" }}>
-                      {l}
-                    </a>
-                  ))}
+                  <StoredFileList value={String((viewingItem as Record<string, string>).models || "")} />
                 </div>
               )}
             </div>
