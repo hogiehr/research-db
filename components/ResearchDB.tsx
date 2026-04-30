@@ -935,8 +935,8 @@ function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntr
                     {relatedTrades.map(trade => (
                       <div key={`trade-${trade.id}`} style={{ padding: "12px 14px", borderRadius: 12, background: "#f6f0e5", border: "1px solid #e3dbce" }}>
                         <div style={{ fontSize: 11, color: "#8d6721", letterSpacing: 1.2, marginBottom: 4 }}>BLOTTER</div>
-                        <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{trade.ticker} · {trade.description || trade.assetClass}</div>
-                        <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{trade.status} · {trade.entryDate || "No date"}</div>
+                        <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{String(trade.ticker || "")} · {String(trade.description || trade.assetClass || "")}</div>
+                        <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{String(trade.status || "")} · {String(trade.entryDate || "No date")}</div>
                       </div>
                     ))}
                     {relatedResearch.map(({ section, entry }) => (
