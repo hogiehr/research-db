@@ -11,14 +11,14 @@ type RichArticleEditorProps = {
 };
 
 const toolbarButtonStyle: React.CSSProperties = {
-  background: "#f0f1f3",
-  border: "1px solid #c4c7ce",
-  borderRadius: 6,
-  color: "#2a2f3c",
+  background: "rgba(255,255,255,0.74)",
+  border: "1px solid #d7d3c8",
+  borderRadius: 999,
+  color: "#4a5564",
   cursor: "pointer",
-  fontSize: 12,
+  fontSize: 11,
   minWidth: 34,
-  padding: "6px 10px",
+  padding: "6px 11px",
 };
 
 function sanitizeFilename(value: string) {
@@ -118,7 +118,7 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center", padding: "10px 12px", background: "#f0f1f3", border: "1px solid #c4c7ce", borderRadius: 10 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center", padding: "10px 12px", background: "rgba(246,244,239,0.9)", border: "1px solid #ddd6c7", borderRadius: 14 }}>
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("bold")}><strong>B</strong></button>
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("italic")}><em>I</em></button>
         <button style={toolbarButtonStyle} type="button" onClick={() => exec("formatBlock", "<h2>")}>H2</button>
@@ -162,10 +162,10 @@ export default function RichArticleEditor({ folder, onChange, placeholder = "Sta
           fontFamily: "'Lora', serif",
           fontSize: 20,
           lineHeight: 1.9,
-          maxWidth: 760,
+          maxWidth: 840,
           margin: "0 auto",
           outline: "none",
-          padding: "44px 40px",
+          padding: "44px 44px",
           whiteSpace: "pre-wrap",
           width: "100%",
         }}
