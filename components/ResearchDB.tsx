@@ -904,20 +904,29 @@ function SellSideFilesTab({ folders, onSave }: { folders: ResearchEntry[]; onSav
   );
 }
 
-const TABS = [
-  { label: "Positions", eyebrow: "Portfolio" },
-  { label: "Blotter", eyebrow: "Trading" },
-  { label: "Analytics", eyebrow: "Stats" },
-  { label: "Journal", eyebrow: "Review" },
-  { label: "Trade Ideas", eyebrow: "Pipeline" },
-  { label: "Security Thesis", eyebrow: "Deep Work" },
-  { label: "Sell-Side PDFs", eyebrow: "Library" },
-  { label: "Macro", eyebrow: "Top Down" },
-  { label: "Market Updates", eyebrow: "Pulse" },
-];
+const TRADING_TABS = [
+  { key: "positions", label: "Positions" },
+  { key: "blotter", label: "Blotter" },
+  { key: "analytics", label: "Analytics" },
+  { key: "journal", label: "Journal" },
+  { key: "tradeIdeas", label: "Trade Ideas" },
+] as const;
+
+const RESEARCH_TABS = [
+  { key: "thesis", label: "Security Thesis" },
+  { key: "sellSide", label: "Sell-Side" },
+  { key: "macro", label: "Macro" },
+  { key: "marketUpdates", label: "Market Updates" },
+] as const;
+
+type PrimaryTab = "trading" | "research";
+type TradingTabKey = typeof TRADING_TABS[number]["key"];
+type ResearchTabKey = typeof RESEARCH_TABS[number]["key"];
 
 export default function ResearchDB() {
-  const [tab, setTab] = useState(0);
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>("trading");
+  const [tradingTab, setTradingTab] = useState<TradingTabKey>("positions");
+  const [researchTab, setResearchTab] = useState<ResearchTabKey>("sellSide");
   const [data, setData] = useState<DBData | null>(null);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -952,65 +961,84 @@ export default function ResearchDB() {
   return (
     <div style={{ minHeight: "100vh", background: "transparent", padding: 20 }}>
       <div style={{ maxWidth: 1480, margin: "0 auto" }}>
-        <div style={{ marginBottom: 18, padding: "26px 28px 22px", borderRadius: 30, border: "1px solid #d9c8b0", background: "linear-gradient(135deg, rgba(255,251,245,0.92) 0%, rgba(242,233,219,0.88) 100%)", boxShadow: "0 22px 70px rgba(76,57,31,0.11)" }}>
-          <div style={{ display: "flex", gap: 18, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" as const }}>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 999, background: "rgba(239,226,201,0.72)", color: "#94631a", fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase" as const, marginBottom: 16 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 999, background: "#335c57", display: "inline-block" }} />
-                Hogan&apos;s Playground
-              </div>
-              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 52, lineHeight: 0.96, color: "#223130", marginBottom: 12 }}>
-                Private market workspace,
-                <br />
-                cleaner and way less miserable.
-              </div>
-              <div style={{ maxWidth: 700, color: "#6a7169", fontSize: 15, lineHeight: 1.7 }}>
-                Trade blotter, thesis writing, macro notes, journal work, analytics, and sell-side files all in one place with a softer reading-first layout.
-              </div>
+        <div style={{ marginBottom: 18, padding: "18px 8px 14px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #d7c8b3" }}>
+          <div>
+            <div style={{ fontSize: 12, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#9f6b1b", marginBottom: 6 }}>Hogan&apos;s Playground</div>
+            <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 34, lineHeight: 1, color: "#223130" }}>
+              {primaryTab === "trading" ? "Trading" : "Research"}
             </div>
-            <div style={{ minWidth: 220, padding: "16px 18px", borderRadius: 22, background: "rgba(255,250,244,0.78)", border: "1px solid #ddcfbc" }}>
-              <div style={{ fontSize: 10, color: "#887a64", letterSpacing: 1.5, textTransform: "uppercase" as const, marginBottom: 8 }}>Workspace Status</div>
-              {saving && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Saving changes...</div>}
-              {!saving && lastSaved && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
-              {!saving && !lastSaved && <div style={{ fontSize: 13, color: "#335c57", fontWeight: 700 }}>Ready to work</div>}
-              <div style={{ fontSize: 12, color: "#7f776d", marginTop: 6, lineHeight: 1.5 }}>Everything here stays internal and updates automatically while you work.</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            {saving && <div style={{ fontSize: 12, color: "#335c57", fontWeight: 700 }}>Saving...</div>}
+            {!saving && lastSaved && <div style={{ fontSize: 12, color: "#335c57", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
+            {!saving && !lastSaved && <div style={{ fontSize: 12, color: "#335c57", fontWeight: 700 }}>Ready</div>}
+            <div style={{ fontSize: 11, color: "#7f776d", marginTop: 4 }}>
+              {primaryTab === "trading" ? "Portfolio, blotter, analytics, and review." : "Thesis work, files, macro, and market notes."}
             </div>
           </div>
         </div>
 
-        <div style={{ marginBottom: 22, padding: 12, borderRadius: 24, border: "1px solid #dacbb8", background: "rgba(255,250,244,0.76)", boxShadow: "0 16px 50px rgba(73,54,29,0.08)" }}>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
-            {TABS.map((t, i) => (
-              <button key={t.label} onClick={() => setTab(i)} style={{
-                background: tab === i ? "linear-gradient(135deg, #335c57 0%, #274844 100%)" : "rgba(255,250,244,0.88)",
-                border: tab === i ? "1px solid #335c57" : "1px solid #ddcfbc",
-                color: tab === i ? "#f8f4ec" : "#3d4643",
-                borderRadius: 18,
-                padding: "12px 14px",
+        <div style={{ marginBottom: 12, display: "flex", gap: 24, borderBottom: "1px solid #d7c8b3" }}>
+          {[
+            { key: "trading", label: "Trading" },
+            { key: "research", label: "Research" },
+          ].map(group => (
+            <button
+              key={group.key}
+              onClick={() => setPrimaryTab(group.key as PrimaryTab)}
+              style={{
+                background: "none",
+                border: "none",
+                borderBottom: primaryTab === group.key ? "2px solid #335c57" : "2px solid transparent",
+                color: primaryTab === group.key ? "#223130" : "#7b766d",
+                padding: "0 2px 12px",
+                fontSize: 14,
+                fontWeight: 700,
+                letterSpacing: 0.2,
                 cursor: "pointer",
-                minWidth: 138,
-                textAlign: "left",
-                boxShadow: tab === i ? "0 12px 26px rgba(39,72,68,0.22)" : "none",
-              }}>
-                <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase" as const, opacity: tab === i ? 0.72 : 0.55, marginBottom: 4 }}>{t.eyebrow}</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{t.label}</div>
+              }}
+            >
+              {group.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 22, display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+          {(primaryTab === "trading" ? TRADING_TABS : RESEARCH_TABS).map(section => {
+            const active = primaryTab === "trading" ? tradingTab === section.key : researchTab === section.key;
+            return (
+              <button
+                key={section.key}
+                onClick={() => primaryTab === "trading" ? setTradingTab(section.key as TradingTabKey) : setResearchTab(section.key as ResearchTabKey)}
+                style={{
+                  background: active ? "rgba(51,92,87,0.12)" : "transparent",
+                  border: "1px solid transparent",
+                  color: active ? "#274844" : "#6f756f",
+                  borderRadius: 999,
+                  padding: "8px 14px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: active ? 700 : 500,
+                }}
+              >
+                {section.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         <div style={{ padding: "8px 8px 36px", maxWidth: 1480, margin: "0 auto" }}>
-        {tab === 0 && <PositionsTab data={data} onChange={update} />}
-        {tab === 1 && <BlotterTab data={data as any} onChange={update as any} />}
-        {tab === 2 && <AnalyticsTab data={data as any} />}
-        {tab === 3 && <JournalTab data={data as any} onChange={update as any} />}
-        {tab === 4 && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
-        {tab === 5 && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
-        {tab === 6 && <SellSideFilesTab folders={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} />}
-        {tab === 7 && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
-        {tab === 8 && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+        {primaryTab === "trading" && tradingTab === "positions" && <PositionsTab data={data} onChange={update} />}
+        {primaryTab === "trading" && tradingTab === "blotter" && <BlotterTab data={data as any} onChange={update as any} />}
+        {primaryTab === "trading" && tradingTab === "analytics" && <AnalyticsTab data={data as any} />}
+        {primaryTab === "trading" && tradingTab === "journal" && <JournalTab data={data as any} onChange={update as any} />}
+        {primaryTab === "trading" && tradingTab === "tradeIdeas" && <ResearchTab items={data.tradeIdeas} onSave={items => update({ ...data, tradeIdeas: items })} type="tradeIdeas" />}
+        {primaryTab === "research" && researchTab === "thesis" && <ResearchTab items={data.thesis} onSave={items => update({ ...data, thesis: items })} type="thesis" />}
+        {primaryTab === "research" && researchTab === "sellSide" && <SellSideFilesTab folders={data.sellSideResearch ?? []} onSave={items => update({ ...data, sellSideResearch: items })} />}
+        {primaryTab === "research" && researchTab === "macro" && <ResearchTab items={data.macro} onSave={items => update({ ...data, macro: items })} type="macro" />}
+        {primaryTab === "research" && researchTab === "marketUpdates" && <ResearchTab items={data.marketUpdates} onSave={items => update({ ...data, marketUpdates: items })} type="marketUpdates" />}
+          </div>
         </div>
-      </div>
     </div>
   );
 }
