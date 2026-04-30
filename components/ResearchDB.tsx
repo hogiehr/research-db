@@ -616,15 +616,17 @@ function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntr
     return haystack.includes(query.trim().toLowerCase());
   });
   const viewingItem = viewing !== null ? items.find(x => x.id === viewing) : null;
-  const viewingTicker = String((viewingItem as Record<string, string> | null)?.ticker || "").trim().toUpperCase();
-  const relatedTrades = viewingTicker ? (contextData.blotter ?? []).filter(trade => trade.ticker?.toUpperCase() === viewingTicker) : [];
+  const viewingTicker = String((viewingItem as Record<string, unknown> | null)?.ticker || "").trim().toUpperCase();
+  const relatedTrades = viewingTicker
+    ? (contextData.blotter ?? []).filter(trade => String(trade.ticker || "").toUpperCase() === viewingTicker)
+    : [];
   const relatedResearch = viewingTicker
     ? [
         ...contextData.tradeIdeas.map(entry => ({ source: "tradeIdeas", section: "Trade Ideas", entry })),
         ...contextData.thesis.map(entry => ({ source: "thesis", section: "Investment Ideas", entry })),
         ...contextData.macro.map(entry => ({ source: "macro", section: "Macro", entry })),
         ...contextData.marketUpdates.map(entry => ({ source: "marketUpdates", section: "Market Updates", entry })),
-      ].filter(({ source, entry }) => source !== type && String((entry as Record<string, string>).ticker || "").toUpperCase() === viewingTicker)
+      ].filter(({ source, entry }) => source !== type && String((entry as Record<string, unknown>).ticker || "").toUpperCase() === viewingTicker)
     : [];
 
   return (
