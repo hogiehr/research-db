@@ -1317,6 +1317,26 @@ export default function ResearchDB() {
               </div>
             )}
           </div>
+          <div style={{ ...softPanel, maxWidth: 860, marginTop: 12, padding: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" as const }}>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Out Of Touch</div>
+                <div style={{ fontSize: 12, color: "#6f756f" }}>A completely unnecessary but spiritually correct addition.</div>
+              </div>
+              <a href="https://www.youtube.com/watch?v=DCkJ5lGPqFs" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#254b49", textDecoration: "none", letterSpacing: 1 }}>
+                OPEN ON YOUTUBE
+              </a>
+            </div>
+            <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #ddd1bf", background: "#f4ebdd" }}>
+              <iframe
+                src="https://www.youtube.com/embed/DCkJ5lGPqFs"
+                title="Hall and Oates - Out of Touch"
+                style={{ width: "100%", aspectRatio: "16 / 9", border: "none", display: "block" }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
         </div>
 
         <div style={{ marginBottom: 12, display: "flex", gap: 24, borderBottom: "1px solid #d7c8b3" }}>
