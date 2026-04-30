@@ -529,7 +529,7 @@ const DAILY_VIDEO_BY_DAY = [
   { title: "Toto - Hold the Line", videoId: "htgr3pvBr-I" },
   { title: "Fleetwood Mac - Everywhere", videoId: "YF1R0hc5Q2I" },
   { title: "Steely Dan - Peg", videoId: "LI7NDDQLvbo" },
-  { title: "Talking Heads - This Must Be the Place", videoId: "o9gK2fOq4MY" },
+  { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
   { title: "Phil Collins - I Don’t Care Anymore", videoId: "C6PNc9KN50M" },
   { title: "Dire Straits - Money for Nothing", videoId: "wTP2RUD_cL0" },
 ] as const;
