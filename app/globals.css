@@ -1,20 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f7f1e8;
-  --bg-deep: #ecdfcf;
-  --panel: rgba(255, 251, 245, 0.88);
-  --panel-strong: #fffaf2;
-  --line: #ddcfba;
-  --line-strong: #c7b292;
-  --text: #20302f;
-  --muted: #6f736a;
-  --brand: #9a6a28;
-  --brand-soft: #f2e4cb;
-  --accent: #254b49;
-  --accent-soft: #dfe9e6;
-  --danger: #aa5b52;
-  --shadow: 0 22px 60px rgba(73, 54, 29, 0.08);
+  --bg: #f8f2e8;
+  --bg-deep: #eedfcd;
+  --panel: rgba(255, 250, 243, 0.84);
+  --panel-strong: rgba(255, 252, 247, 0.94);
+  --line: #dfcfbb;
+  --line-strong: #c8b08a;
+  --text: #1f3435;
+  --muted: #6f7a76;
+  --brand: #c47b3f;
+  --brand-soft: #f7dcc0;
+  --accent: #1d5660;
+  --accent-soft: #dceff0;
+  --accent-deep: #123b49;
+  --sunrise: #f5a06c;
+  --coral: #df7a65;
+  --sea: #2f6f7c;
+  --sea-soft: #d7edf1;
+  --danger: #b45d54;
+  --shadow: 0 26px 70px rgba(55, 65, 83, 0.10);
 }
 
 *, *::before, *::after {
@@ -25,16 +30,19 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(202, 177, 134, 0.20), transparent 28%),
-    radial-gradient(circle at top right, rgba(92, 128, 121, 0.13), transparent 26%),
-    linear-gradient(180deg, #fcf7ef 0%, #f4ebdf 100%);
+    radial-gradient(circle at 12% 10%, rgba(245, 160, 108, 0.30), transparent 24%),
+    radial-gradient(circle at 88% 12%, rgba(76, 138, 158, 0.24), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(40, 97, 112, 0.16), transparent 34%),
+    linear-gradient(180deg, #fff8ef 0%, #f7ecdf 42%, #eef1eb 100%);
 }
 
 body {
   min-height: 100vh;
   color: var(--text);
   font-family: 'Manrope', sans-serif;
-  background: transparent;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0)),
+    transparent;
 }
 
 a {
@@ -42,7 +50,7 @@ a {
 }
 
 ::selection {
-  background: rgba(154, 106, 40, 0.18);
+  background: rgba(196, 123, 63, 0.20);
 }
 
 ::-webkit-scrollbar {
@@ -51,11 +59,11 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(196, 180, 156, 0.25);
+  background: rgba(214, 201, 183, 0.30);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(116, 96, 73, 0.42);
+  background: rgba(47, 111, 124, 0.36);
   border-radius: 999px;
 }
 
