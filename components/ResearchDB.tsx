@@ -1293,7 +1293,7 @@ export default function ResearchDB() {
   return (
     <div style={{ minHeight: "100vh", background: "transparent", padding: 20 }}>
       <div style={{ maxWidth: 1480, margin: "0 auto" }}>
-        <div style={{ position: "relative", overflow: "hidden", marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(210,141,73,0.45)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,246,234,0.96) 0%, rgba(255,191,116,0.72) 34%, rgba(255,140,71,0.60) 58%, rgba(201,238,244,0.82) 100%)", boxShadow: "0 26px 58px rgba(160,92,24,0.14)" }}>
+        <div style={{ position: "relative", overflow: "hidden", marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(206,121,39,0.52)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,242,225,0.98) 0%, rgba(255,184,94,0.88) 28%, rgba(255,130,60,0.78) 60%, rgba(177,228,239,0.90) 100%)", boxShadow: "0 28px 64px rgba(161,85,18,0.18)" }}>
           <div style={{ position: "absolute", left: -48, top: -62, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,176,71,0.54) 0%, rgba(255,156,66,0.24) 42%, rgba(255,156,66,0) 74%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", right: -34, top: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,196,113,0.34) 0%, rgba(255,196,113,0.10) 42%, rgba(255,196,113,0) 72%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", right: 120, bottom: -70, width: 240, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(39,131,154,0.24) 0%, rgba(39,131,154,0.10) 42%, rgba(39,131,154,0) 74%)", pointerEvents: "none" }} />
@@ -1320,7 +1320,7 @@ export default function ResearchDB() {
         </div>
 
         <div style={{ marginBottom: 18 }}>
-          <div style={{ background: "linear-gradient(135deg, rgba(255,247,237,0.96) 0%, rgba(255,210,158,0.72) 48%, rgba(212,240,245,0.84) 100%)", border: "1px solid rgba(210,141,73,0.38)", borderRadius: 22, padding: 18, maxWidth: 900, boxShadow: "0 18px 40px rgba(160,92,24,0.08)" }}>
+          <div style={{ background: "linear-gradient(135deg, rgba(255,251,245,0.98) 0%, rgba(248,253,255,0.94) 62%, rgba(209,238,244,0.92) 100%)", border: "1px solid rgba(110,186,205,0.42)", borderRadius: 22, padding: 18, maxWidth: 900, boxShadow: "0 18px 40px rgba(35,111,131,0.10)" }}>
             <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#b85f16", marginBottom: 10 }}>Universal Search</div>
             <input
               style={{ ...iStyle, maxWidth: "100%" }}
@@ -1348,7 +1348,7 @@ export default function ResearchDB() {
               </div>
             )}
           </div>
-          <div style={{ ...softPanel, maxWidth: 660, marginTop: 14, padding: 16, background: "linear-gradient(135deg, rgba(255,247,237,0.96) 0%, rgba(255,214,165,0.64) 50%, rgba(213,239,244,0.84) 100%)", border: "1px solid rgba(210,141,73,0.34)" }}>
+          <div style={{ ...softPanel, maxWidth: 660, marginTop: 14, padding: 16, background: "linear-gradient(135deg, rgba(255,248,239,0.98) 0%, rgba(255,232,201,0.88) 58%, rgba(255,244,230,0.96) 100%)", border: "1px solid rgba(220,168,99,0.40)", boxShadow: "0 20px 42px rgba(173,108,36,0.10)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" as const }}>
               <div>
                 <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#b85f16", marginBottom: 5 }}>Verse Of The Day</div>
@@ -1360,7 +1360,7 @@ export default function ResearchDB() {
                 </a>
               )}
             </div>
-            <div style={{ borderRadius: 18, border: "1px solid rgba(210,141,73,0.28)", background: "linear-gradient(180deg, rgba(255,252,247,0.94) 0%, rgba(255,245,232,0.92) 100%)", padding: "18px 20px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
+            <div style={{ borderRadius: 18, border: "1px solid rgba(222,186,133,0.50)", background: "linear-gradient(180deg, rgba(255,253,249,0.98) 0%, rgba(255,248,239,0.96) 100%)", padding: "18px 20px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.75)" }}>
               <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 26, lineHeight: 1.5, color: "#15586b" }}>
                 "{dailyVerse.text}"
               </div>
@@ -1401,9 +1401,10 @@ export default function ResearchDB() {
                 key={section.key}
                 onClick={() => primaryTab === "trading" ? setTradingTab(section.key as TradingTabKey) : setResearchTab(section.key as ResearchTabKey)}
                 style={{
-                  background: active ? "linear-gradient(135deg, rgba(255,193,120,0.34) 0%, rgba(202,235,239,0.44) 100%)" : "transparent",
-                  border: active ? "1px solid rgba(210,141,73,0.44)" : "1px solid transparent",
-                  color: active ? "#15586b" : "#6f756f",
+                  background: active ? "linear-gradient(135deg, rgba(255,238,214,0.98) 0%, rgba(255,190,114,0.92) 36%, rgba(206,239,244,0.94) 100%)" : "transparent",
+                  border: active ? "1px solid rgba(207,122,34,0.50)" : "1px solid transparent",
+                  color: active ? "#0f5063" : "#6f756f",
+                  boxShadow: active ? "0 10px 24px rgba(169,102,28,0.10)" : "none",
                   borderRadius: 999,
                   padding: "9px 15px",
                   cursor: "pointer",
