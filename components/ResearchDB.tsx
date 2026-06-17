@@ -524,14 +524,14 @@ function normalizedSearchText(parts: unknown[]) {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
-const DAILY_VIDEO_BY_DAY = [
-  { title: "Hall & Oates - Out of Touch", videoId: "DCkJ5lGPqFs" },
-  { title: "Gerry Rafferty - Baker Street", videoId: "Fo6aKnRnBxM" },
-  { title: "Tears for Fears - Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
-  { title: "Steely Dan - Dirty Work", videoId: "CH0JpBzi68E" },
-  { title: "Hall & Oates - Out Of Touch (Official HD Video)", videoId: "D00M2KZH1J0" },
-  { title: "Yazoo - Situation", videoId: "ysmVlaw36L0" },
-  { title: "Manfred Mann's Earth Band - Blinded by the Light", videoId: "m4fS-OFRG2M" },
+const DAILY_VERSE_BY_DAY = [
+  { reference: "Psalm 46:10", text: "Be still, and know that I am God." },
+  { reference: "Proverbs 3:5-6", text: "Trust in the Lord with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths." },
+  { reference: "Joshua 1:9", text: "Be strong and of a good courage; be not afraid, neither be thou dismayed: for the Lord thy God is with thee whithersoever thou goest." },
+  { reference: "Philippians 4:13", text: "I can do all things through Christ which strengtheneth me." },
+  { reference: "Isaiah 40:31", text: "But they that wait upon the Lord shall renew their strength; they shall mount up with wings as eagles." },
+  { reference: "Romans 8:28", text: "And we know that all things work together for good to them that love God." },
+  { reference: "Lamentations 3:22-23", text: "It is of the Lord's mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness." },
 ] as const;
 
 function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType; contextData: DBData }) {
@@ -1164,7 +1164,7 @@ export default function ResearchDB() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [globalQuery, setGlobalQuery] = useState("");
-  const dailyVideo = DAILY_VIDEO_BY_DAY[new Date().getDay()];
+  const dailyVerse = DAILY_VERSE_BY_DAY[new Date().getDay()];
 
   // Load on mount
   useEffect(() => {
@@ -1329,23 +1329,16 @@ export default function ResearchDB() {
             )}
           </div>
           <div style={{ ...softPanel, maxWidth: 620, marginTop: 12, padding: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" as const }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" as const }}>
               <div>
-                <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Daily Tape Song</div>
-                <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVideo.title}</div>
+                <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Verse Of The Day</div>
+                <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVerse.reference}</div>
               </div>
-              <a href={`https://www.youtube.com/watch?v=${dailyVideo.videoId}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#254b49", textDecoration: "none", letterSpacing: 1 }}>
-                OPEN ON YOUTUBE
-              </a>
             </div>
-            <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #ddd1bf", background: "#f4ebdd" }}>
-              <iframe
-                src={`https://www.youtube.com/embed/${dailyVideo.videoId}`}
-                title={dailyVideo.title}
-                style={{ width: "100%", aspectRatio: "16 / 9", maxHeight: 260, border: "none", display: "block" }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            <div style={{ borderRadius: 16, border: "1px solid #ddd1bf", background: "#fffaf2", padding: "16px 18px" }}>
+              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 24, lineHeight: 1.45, color: "#254b49" }}>
+                "{dailyVerse.text}"
+              </div>
             </div>
           </div>
         </div>
