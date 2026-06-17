@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f8f2e8;
-  --bg-deep: #eedfcd;
-  --panel: rgba(255, 250, 243, 0.84);
-  --panel-strong: rgba(255, 252, 247, 0.94);
-  --line: #dfcfbb;
-  --line-strong: #c8b08a;
+  --bg: #fdf1df;
+  --bg-deep: #f2d1ab;
+  --panel: rgba(255, 247, 236, 0.86);
+  --panel-strong: rgba(255, 251, 245, 0.95);
+  --line: #e0b987;
+  --line-strong: #cf9151;
   --text: #1f3435;
   --muted: #6f7a76;
-  --brand: #c47b3f;
-  --brand-soft: #f7dcc0;
-  --accent: #1d5660;
-  --accent-soft: #dceff0;
-  --accent-deep: #123b49;
-  --sunrise: #f5a06c;
-  --coral: #df7a65;
-  --sea: #2f6f7c;
-  --sea-soft: #d7edf1;
+  --brand: #df7f2f;
+  --brand-soft: #ffd6ac;
+  --accent: #18677a;
+  --accent-soft: #caebef;
+  --accent-deep: #0f4357;
+  --sunrise: #ff9d4d;
+  --coral: #ea6f51;
+  --sea: #27839a;
+  --sea-soft: #c8edf4;
   --danger: #b45d54;
   --shadow: 0 26px 70px rgba(55, 65, 83, 0.10);
 }
@@ -30,10 +30,11 @@
 
 html {
   background:
-    radial-gradient(circle at 12% 10%, rgba(245, 160, 108, 0.30), transparent 24%),
-    radial-gradient(circle at 88% 12%, rgba(76, 138, 158, 0.24), transparent 26%),
-    radial-gradient(circle at 50% 100%, rgba(40, 97, 112, 0.16), transparent 34%),
-    linear-gradient(180deg, #fff8ef 0%, #f7ecdf 42%, #eef1eb 100%);
+    radial-gradient(circle at 10% 8%, rgba(255, 157, 77, 0.44), transparent 24%),
+    radial-gradient(circle at 28% 0%, rgba(234, 111, 81, 0.20), transparent 18%),
+    radial-gradient(circle at 88% 12%, rgba(39, 131, 154, 0.26), transparent 25%),
+    radial-gradient(circle at 74% 88%, rgba(105, 194, 214, 0.16), transparent 22%),
+    linear-gradient(180deg, #fff5e8 0%, #f9debb 38%, #f5b97f 72%, #d9edf0 100%);
 }
 
 body {
@@ -41,7 +42,7 @@ body {
   color: var(--text);
   font-family: 'Manrope', sans-serif;
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0)),
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03)),
     transparent;
 }
 
@@ -50,7 +51,7 @@ a {
 }
 
 ::selection {
-  background: rgba(196, 123, 63, 0.20);
+  background: rgba(223, 127, 47, 0.24);
 }
 
 ::-webkit-scrollbar {
@@ -59,11 +60,11 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(214, 201, 183, 0.30);
+  background: rgba(224, 185, 135, 0.26);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(47, 111, 124, 0.36);
+  background: rgba(39, 131, 154, 0.42);
   border-radius: 999px;
 }
 

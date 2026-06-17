@@ -1293,33 +1293,35 @@ export default function ResearchDB() {
   return (
     <div style={{ minHeight: "100vh", background: "transparent", padding: 20 }}>
       <div style={{ maxWidth: 1480, margin: "0 auto" }}>
-        <div style={{ position: "relative", overflow: "hidden", marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(208,182,152,0.7)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,250,243,0.92) 0%, rgba(252,240,227,0.88) 42%, rgba(230,244,245,0.82) 100%)", boxShadow: "0 24px 54px rgba(73,54,29,0.08)" }}>
-          <div style={{ position: "absolute", right: -34, top: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,160,108,0.24) 0%, rgba(245,160,108,0.08) 42%, rgba(245,160,108,0) 72%)", pointerEvents: "none" }} />
+        <div style={{ position: "relative", overflow: "hidden", marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(210,141,73,0.45)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,246,234,0.96) 0%, rgba(255,191,116,0.72) 34%, rgba(255,140,71,0.60) 58%, rgba(201,238,244,0.82) 100%)", boxShadow: "0 26px 58px rgba(160,92,24,0.14)" }}>
+          <div style={{ position: "absolute", left: -48, top: -62, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,176,71,0.54) 0%, rgba(255,156,66,0.24) 42%, rgba(255,156,66,0) 74%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", right: -34, top: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,196,113,0.34) 0%, rgba(255,196,113,0.10) 42%, rgba(255,196,113,0) 72%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", right: 120, bottom: -70, width: 240, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(39,131,154,0.24) 0%, rgba(39,131,154,0.10) 42%, rgba(39,131,154,0) 74%)", pointerEvents: "none" }} />
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#c47b3f", marginBottom: 8 }}>Hogan&apos;s Playground</div>
-            <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 40, lineHeight: 0.98, color: "#1d3b46", marginBottom: 8 }}>
+            <div style={{ fontSize: 12, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#b55a13", marginBottom: 8 }}>Hogan&apos;s Playground</div>
+            <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 40, lineHeight: 0.98, color: "#133f50", marginBottom: 8 }}>
               {primaryTab === "trading" ? "Trading" : "Research"}
             </div>
-            <div style={{ fontSize: 13, color: "#5e6f6d", maxWidth: 640 }}>
+            <div style={{ fontSize: 13, color: "#4f5554", maxWidth: 640 }}>
               {primaryTab === "trading" ? "Stewardship, conviction, and execution in one place." : "Ideas, scripture, notes, and research with a little more air and light."}
             </div>
           </div>
           <div style={{ textAlign: "right", position: "relative", zIndex: 1 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, marginBottom: 12, borderRadius: 999, border: "1px solid rgba(196,123,63,0.35)", background: "linear-gradient(180deg, rgba(255,251,247,0.95) 0%, rgba(248,236,221,0.88) 100%)", color: "#c47b3f", fontSize: 22, boxShadow: "0 12px 28px rgba(73,54,29,0.06)" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, marginBottom: 12, borderRadius: 999, border: "1px solid rgba(210,141,73,0.42)", background: "linear-gradient(180deg, rgba(255,247,237,0.98) 0%, rgba(255,214,168,0.90) 100%)", color: "#c4681f", fontSize: 22, boxShadow: "0 14px 30px rgba(160,92,24,0.12)" }}>
               †
             </div>
-            {saving && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Saving...</div>}
-            {!saving && lastSaved && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
-            {!saving && !lastSaved && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Ready</div>}
-            <div style={{ fontSize: 11, color: "#7f776d", marginTop: 6 }}>
+            {saving && <div style={{ fontSize: 12, color: "#15586b", fontWeight: 700 }}>Saving...</div>}
+            {!saving && lastSaved && <div style={{ fontSize: 12, color: "#15586b", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
+            {!saving && !lastSaved && <div style={{ fontSize: 12, color: "#15586b", fontWeight: 700 }}>Ready</div>}
+            <div style={{ fontSize: 11, color: "#6f6559", marginTop: 6 }}>
               {primaryTab === "trading" ? "Portfolio, blotter, analytics, and review." : "Investment ideas, files, macro, and market notes."}
             </div>
           </div>
         </div>
 
         <div style={{ marginBottom: 18 }}>
-          <div style={{ background: "linear-gradient(135deg, rgba(255,250,243,0.9) 0%, rgba(255,244,232,0.88) 55%, rgba(231,244,246,0.82) 100%)", border: "1px solid rgba(208,182,152,0.72)", borderRadius: 22, padding: 18, maxWidth: 900, boxShadow: "0 18px 40px rgba(73,54,29,0.06)" }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#c47b3f", marginBottom: 10 }}>Universal Search</div>
+          <div style={{ background: "linear-gradient(135deg, rgba(255,247,237,0.96) 0%, rgba(255,210,158,0.72) 48%, rgba(212,240,245,0.84) 100%)", border: "1px solid rgba(210,141,73,0.38)", borderRadius: 22, padding: 18, maxWidth: 900, boxShadow: "0 18px 40px rgba(160,92,24,0.08)" }}>
+            <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#b85f16", marginBottom: 10 }}>Universal Search</div>
             <input
               style={{ ...iStyle, maxWidth: "100%" }}
               value={globalQuery}
@@ -1338,7 +1340,7 @@ export default function ResearchDB() {
                     onClick={result.action}
                     style={{ textAlign: "left", background: "rgba(255,251,246,0.92)", border: "1px solid #e5d8c7", borderRadius: 16, padding: "13px 15px", cursor: "pointer", boxShadow: "0 10px 22px rgba(73,54,29,0.04)" }}
                   >
-                    <div style={{ fontSize: 10, letterSpacing: 1.4, color: result.kind === "trading" ? "#2f6f7c" : "#c47b3f", marginBottom: 4 }}>{result.label.toUpperCase()}</div>
+                    <div style={{ fontSize: 10, letterSpacing: 1.4, color: result.kind === "trading" ? "#1e7285" : "#cb6a1d", marginBottom: 4 }}>{result.label.toUpperCase()}</div>
                     <div style={{ fontSize: 14, color: "#223130", fontWeight: 700 }}>{result.title}</div>
                     {!!result.meta && <div style={{ fontSize: 12, color: "#6f756f", marginTop: 3 }}>{result.meta}</div>}
                   </button>
@@ -1346,20 +1348,20 @@ export default function ResearchDB() {
               </div>
             )}
           </div>
-          <div style={{ ...softPanel, maxWidth: 660, marginTop: 14, padding: 16, background: "linear-gradient(135deg, rgba(255,249,241,0.92) 0%, rgba(255,245,232,0.84) 62%, rgba(235,247,248,0.82) 100%)" }}>
+          <div style={{ ...softPanel, maxWidth: 660, marginTop: 14, padding: 16, background: "linear-gradient(135deg, rgba(255,247,237,0.96) 0%, rgba(255,214,165,0.64) 50%, rgba(213,239,244,0.84) 100%)", border: "1px solid rgba(210,141,73,0.34)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" as const }}>
               <div>
-                <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#c47b3f", marginBottom: 5 }}>Verse Of The Day</div>
+                <div style={{ fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#b85f16", marginBottom: 5 }}>Verse Of The Day</div>
                 <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVerse.reference} · {dailyVerse.version}</div>
               </div>
               {dailyVerse.permalink && (
-                <a href={dailyVerse.permalink} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#1d5660", textDecoration: "none", letterSpacing: 1 }}>
+                <a href={dailyVerse.permalink} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#15586b", textDecoration: "none", letterSpacing: 1 }}>
                   OPEN SOURCE
                 </a>
               )}
             </div>
-            <div style={{ borderRadius: 18, border: "1px solid rgba(208,182,152,0.68)", background: "rgba(255,252,247,0.9)", padding: "18px 20px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
-              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 26, lineHeight: 1.5, color: "#1d5660" }}>
+            <div style={{ borderRadius: 18, border: "1px solid rgba(210,141,73,0.28)", background: "linear-gradient(180deg, rgba(255,252,247,0.94) 0%, rgba(255,245,232,0.92) 100%)", padding: "18px 20px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
+              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 26, lineHeight: 1.5, color: "#15586b" }}>
                 "{dailyVerse.text}"
               </div>
             </div>
@@ -1377,8 +1379,8 @@ export default function ResearchDB() {
               style={{
                 background: "none",
                 border: "none",
-                borderBottom: primaryTab === group.key ? "2px solid #1d5660" : "2px solid transparent",
-                color: primaryTab === group.key ? "#1d3b46" : "#7b766d",
+                borderBottom: primaryTab === group.key ? "2px solid #d56d1b" : "2px solid transparent",
+                color: primaryTab === group.key ? "#b85f16" : "#7b766d",
                 padding: "0 2px 12px",
                 fontSize: 14,
                 fontWeight: 700,
@@ -1399,9 +1401,9 @@ export default function ResearchDB() {
                 key={section.key}
                 onClick={() => primaryTab === "trading" ? setTradingTab(section.key as TradingTabKey) : setResearchTab(section.key as ResearchTabKey)}
                 style={{
-                  background: active ? "linear-gradient(135deg, rgba(244,198,154,0.26) 0%, rgba(213,237,241,0.42) 100%)" : "transparent",
-                  border: active ? "1px solid rgba(208,182,152,0.72)" : "1px solid transparent",
-                  color: active ? "#1d5660" : "#6f756f",
+                  background: active ? "linear-gradient(135deg, rgba(255,193,120,0.34) 0%, rgba(202,235,239,0.44) 100%)" : "transparent",
+                  border: active ? "1px solid rgba(210,141,73,0.44)" : "1px solid transparent",
+                  color: active ? "#15586b" : "#6f756f",
                   borderRadius: 999,
                   padding: "9px 15px",
                   cursor: "pointer",
