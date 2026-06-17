@@ -1293,7 +1293,8 @@ export default function ResearchDB() {
   return (
     <div style={{ minHeight: "100vh", background: "transparent", padding: 20 }}>
       <div style={{ maxWidth: 1480, margin: "0 auto" }}>
-        <div style={{ marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(208,182,152,0.7)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,250,243,0.92) 0%, rgba(252,240,227,0.88) 42%, rgba(230,244,245,0.82) 100%)", boxShadow: "0 24px 54px rgba(73,54,29,0.08)" }}>
+        <div style={{ position: "relative", overflow: "hidden", marginBottom: 20, padding: "20px 18px 18px", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(208,182,152,0.7)", borderRadius: 24, background: "linear-gradient(135deg, rgba(255,250,243,0.92) 0%, rgba(252,240,227,0.88) 42%, rgba(230,244,245,0.82) 100%)", boxShadow: "0 24px 54px rgba(73,54,29,0.08)" }}>
+          <div style={{ position: "absolute", right: -34, top: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,160,108,0.24) 0%, rgba(245,160,108,0.08) 42%, rgba(245,160,108,0) 72%)", pointerEvents: "none" }} />
           <div>
             <div style={{ fontSize: 12, letterSpacing: 1.8, textTransform: "uppercase" as const, color: "#c47b3f", marginBottom: 8 }}>Hogan&apos;s Playground</div>
             <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 40, lineHeight: 0.98, color: "#1d3b46", marginBottom: 8 }}>
@@ -1303,7 +1304,10 @@ export default function ResearchDB() {
               {primaryTab === "trading" ? "Stewardship, conviction, and execution in one place." : "Ideas, scripture, notes, and research with a little more air and light."}
             </div>
           </div>
-          <div style={{ textAlign: "right" }}>
+          <div style={{ textAlign: "right", position: "relative", zIndex: 1 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, marginBottom: 12, borderRadius: 999, border: "1px solid rgba(196,123,63,0.35)", background: "linear-gradient(180deg, rgba(255,251,247,0.95) 0%, rgba(248,236,221,0.88) 100%)", color: "#c47b3f", fontSize: 22, boxShadow: "0 12px 28px rgba(73,54,29,0.06)" }}>
+              †
+            </div>
             {saving && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Saving...</div>}
             {!saving && lastSaved && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Saved {lastSaved.toLocaleTimeString()}</div>}
             {!saving && !lastSaved && <div style={{ fontSize: 12, color: "#1d5660", fontWeight: 700 }}>Ready</div>}
