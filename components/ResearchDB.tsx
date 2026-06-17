@@ -524,15 +524,13 @@ function normalizedSearchText(parts: unknown[]) {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
-const DAILY_VERSE_BY_DAY = [
-  { reference: "Psalm 46:10", text: "Be still, and know that I am God." },
-  { reference: "Proverbs 3:5-6", text: "Trust in the Lord with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths." },
-  { reference: "Joshua 1:9", text: "Be strong and of a good courage; be not afraid, neither be thou dismayed: for the Lord thy God is with thee whithersoever thou goest." },
-  { reference: "Philippians 4:13", text: "I can do all things through Christ which strengtheneth me." },
-  { reference: "Isaiah 40:31", text: "But they that wait upon the Lord shall renew their strength; they shall mount up with wings as eagles." },
-  { reference: "Romans 8:28", text: "And we know that all things work together for good to them that love God." },
-  { reference: "Lamentations 3:22-23", text: "It is of the Lord's mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness." },
-] as const;
+const FALLBACK_VERSE = {
+  reference: "Psalm 46:10",
+  text: "Be still, and know that I am God.",
+  permalink: "https://www.biblegateway.com/passage/?search=Psalm%2046%3A10&version=ESV",
+  version: "English Standard Version",
+  source: "fallback",
+};
 
 function ResearchTab({ items, onSave, type, contextData }: { items: ResearchEntry[]; onSave: (items: ResearchEntry[]) => void; type: ResearchType; contextData: DBData }) {
   const [open, setOpen] = useState(false);
@@ -1164,11 +1162,24 @@ export default function ResearchDB() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [globalQuery, setGlobalQuery] = useState("");
-  const dailyVerse = DAILY_VERSE_BY_DAY[new Date().getDay()];
+  const [dailyVerse, setDailyVerse] = useState(FALLBACK_VERSE);
 
   // Load on mount
   useEffect(() => {
     fetch("/api/data").then(r => r.json()).then(setData);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/verse-of-the-day")
+      .then(r => r.json())
+      .then(payload => setDailyVerse({
+        reference: String(payload?.reference || FALLBACK_VERSE.reference),
+        text: String(payload?.text || FALLBACK_VERSE.text),
+        permalink: String(payload?.permalink || FALLBACK_VERSE.permalink),
+        version: String(payload?.version || FALLBACK_VERSE.version),
+        source: String(payload?.source || FALLBACK_VERSE.source),
+      }))
+      .catch(() => setDailyVerse(FALLBACK_VERSE));
   }, []);
 
   // Debounced auto-save
@@ -1332,8 +1343,13 @@ export default function ResearchDB() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" as const }}>
               <div>
                 <div style={{ fontSize: 10, letterSpacing: 1.7, textTransform: "uppercase", color: "#9f6b1b", marginBottom: 5 }}>Verse Of The Day</div>
-                <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVerse.reference}</div>
+                <div style={{ fontSize: 12, color: "#6f756f" }}>{dailyVerse.reference} · {dailyVerse.version}</div>
               </div>
+              {dailyVerse.permalink && (
+                <a href={dailyVerse.permalink} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#254b49", textDecoration: "none", letterSpacing: 1 }}>
+                  OPEN SOURCE
+                </a>
+              )}
             </div>
             <div style={{ borderRadius: 16, border: "1px solid #ddd1bf", background: "#fffaf2", padding: "16px 18px" }}>
               <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 24, lineHeight: 1.45, color: "#254b49" }}>
