@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const FALLBACK_VERSE = {
   reference: "Psalm 46:10",
   text: "Be still, and know that I am God.",
@@ -29,7 +31,7 @@ export async function GET() {
         "User-Agent": "HogansPlayground/1.0",
         "Accept": "application/json",
       },
-      next: { revalidate: 60 * 60 * 12 },
+      cache: "no-store",
     });
 
     if (!response.ok) throw new Error(`BibleGateway returned ${response.status}`);
@@ -43,8 +45,16 @@ export async function GET() {
       permalink: String(votd.permalink || ""),
       version: String(votd.version || "English Standard Version"),
       source: "BibleGateway",
+    }, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
     });
   } catch {
-    return NextResponse.json(FALLBACK_VERSE);
+    return NextResponse.json(FALLBACK_VERSE, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
   }
 }
