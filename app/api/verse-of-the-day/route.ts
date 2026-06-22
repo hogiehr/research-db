@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+const VOTD_PAGE_URL = "https://www.biblegateway.com/verse-of-the-day";
 
 const FALLBACK_VERSE = {
   reference: "Psalm 46:10",
   text: "Be still, and know that I am God.",
-  permalink: "https://www.biblegateway.com/passage/?search=Psalm%2046%3A10&version=ESV",
+  permalink: VOTD_PAGE_URL,
   version: "English Standard Version",
   source: "fallback",
 };
@@ -42,7 +43,7 @@ export async function GET() {
     return NextResponse.json({
       reference: String(votd.display_ref),
       text: decodeHtml(String(votd.text)),
-      permalink: String(votd.permalink || ""),
+      permalink: VOTD_PAGE_URL,
       version: String(votd.version || "English Standard Version"),
       source: "BibleGateway",
     }, {
